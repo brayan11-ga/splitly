@@ -153,7 +153,13 @@ def test_commit_is_visible_from_independent_connection(postgres_engine):
             yield session
 
     application.dependency_overrides[get_session] = override_session
-    with TestClient(application) as client:
+    with TestClient(application, headers={"Origin": "http://localhost:5173", "X-CSRF-Token": "bootstrap"}) as client:
+        response = client.post("/api/auth/register", json={
+            "full_name": "Prueba de persistencia", "email": f"{uuid4().hex}@example.com",
+            "password": "Una frase de prueba segura 123",
+        })
+        assert response.status_code == 201
+        client.headers["X-CSRF-Token"] = response.json()["csrf_token"]
         group = create_group(client, "Persistencia")
         with Session(postgres_engine) as other_session:
             assert other_session.get(Group, group["id"]).name == "Persistencia"

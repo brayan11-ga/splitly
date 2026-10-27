@@ -159,3 +159,72 @@ ALCANCE:
 - Verificación final: `npm run build` desde client aprobada (446 módulos; JS 402,69 kB / 129,10 kB gzip; CSS 19,49 kB / 5,20 kB gzip). `npm run lint` desde client aprobada sin advertencias. `git diff --check` sin errores de whitespace (Git avisa conversión futura LF/CRLF).
 - Correcciones: compilación inicial bloqueada por spawn EPERM del sandbox; compilación autorizada fuera del sandbox aprobada. Se corrigió una advertencia de render impuro por Date usando el año de esta edición. Una llamada accidental de lint desde la raíz falló por ausencia de package.json; se repitió correctamente desde client.
 - Límites: no se ejecutó un navegador ni se generaron capturas de implementación; revisión manual pendiente según client/README.md. No hay pruebas de cálculo en server/tests ni lógica financiera nueva en esta iteración; el reparto mostrado es un ejemplo estático, no un motor validado. Backend intacto, sin push ni despliegue.
+
+## 2026-10-27 — Landing interactiva con Motion
+- Herramienta: Codex.
+- Objetivo: añadir magnetismo, tarjetas reactivas, parallax de hero, indicador contextual y microinteracciones manteniendo diseño y rutas.
+- Extractos textuales del prompt real recibido (completo en esta conversación):
+
+```text
+Transformar la Landing Page actual en una experiencia mucho más interactiva e inmersiva, mediante animaciones que reaccionen a las acciones del usuario.
+```
+
+```text
+- Usar Motion y CSS para la mayoría de efectos.
+- Crear componentes reutilizables.
+- Usar transformaciones GPU-friendly cuando sea posible.
+- Evitar listeners globales innecesarios.
+- No producir renders React continuos por cada movimiento del ratón.
+- Desactivar efectos dependientes de hover en dispositivos táctiles.
+- Respetar prefers-reduced-motion.
+- Mantener indicadores visibles de foco para teclado.
+- Evitar modificar el layout durante las animaciones.
+```
+
+- Archivos: client/src/components/PointerInteractions.jsx (nuevo), client/src/hooks/usePointerMotion.js (nuevo), LandingUI.jsx, pages/LandingPage.jsx, App.css; client/README.md, docs/DECISIONES.md y PROMPTS.md.
+- Límites: sin cambios de backend, autenticación ni dependencias. Sin push. Revisión visual y táctil pendiente en navegador según client/README.md; sin nueva lógica de cálculo ni pruebas de cálculo existentes que ejecutar en esta iteración.
+- Verificación final: `npm run lint` desde client aprobado sin advertencias; `npm run build` aprobado (448 módulos, JS 409,23 kB / 131,42 kB gzip, CSS 21,89 kB / 5,70 kB gzip). Build inicial bloqueado por spawn EPERM; reintento autorizado fuera del sandbox aprobado. Lint invocado inicialmente desde raíz falló por no existir allí package.json y se ejecutó correctamente desde client.
+- `git diff --check`: se corrigió una línea vacía al final de LandingPage.jsx. Los avisos de conversión LF/CRLF pertenecen a la configuración de Git. Sin cambios en backend ni manifiestos de dependencias.
+- No se ejecutó navegador; no se presentan capturas, mediciones de fluidez ni pruebas visuales inventadas. Procedimiento manual en client/README.md.
+
+## 2026-10-27 — Autenticación PostgreSQL a React
+- Herramienta: Codex.
+- Objetivo: autenticación real con Argon2, sesiones revocables en cookie HttpOnly, CSRF, autorización por propietario, formularios Stitch y dashboard protegido. La solicitud actual sustituye la regla anterior de MVP sin autenticación.
+- Extractos textuales del prompt real (completo en la conversación):
+
+```text
+OBJETIVO PRINCIPAL:
+Implementar un sistema REAL y FUNCIONAL de autenticación completo, desde PostgreSQL hasta React.
+
+IMPORTANTE: tenemos poco tiempo para finalizar el hackathon. Prioriza una implementación segura, sencilla, verificable y lista para integrarse con el despliegue.
+```
+
+```text
+6. Si existen grupos anteriores sin propietario, tratarlos mediante una estrategia de migración explícita y segura. No asignarlos arbitrariamente a usuarios nuevos ni eliminar datos.
+```
+
+```text
+- Usar sesión autenticada mediante cookie HttpOnly.
+- Configurar Secure y SameSite apropiadamente para desarrollo local y producción.
+- No almacenar JWT o secretos de sesión en localStorage ni sessionStorage.
+- Implementar una dependencia get_current_user.
+```
+
+```text
+- Implementa por etapas dentro de esta misma tarea.
+- Verifica los resultados al terminar cada fase.
+- Si alguna decisión afecta datos existentes o requiere secretos reales, prepara el código y documenta el paso manual necesario sin inventar credenciales.
+- No modifiques ni destruyas datos existentes de splitly_dev.
+- No ejecutes migraciones sobre producción.
+- No hagas git push automáticamente.
+- No introduzcas servicios externos de autenticación.
+```
+
+- Inspección: AGENTS, README y docs; modelos, servicios, routers, sesiones, migración 0001 y pruebas; rutas React y cambios sin commit de Landing/interacciones; DESIGN.md, HTML y capturas Stitch de login/registro.
+- Backend: modelos User/AuthSession, Group.owner_id, revisión 0002 aditiva, schemas/router/servicios/repositorio de autenticación, get_current_user con CSRF, filtros de propietario en CRUD, configuración cookies/orígenes, CORS credentialed, validación sin input sensible y respuestas no-store. pwdlib[argon2] y email-validator en requirements. Tests previos adaptados para autenticar; nuevas pruebas de migración preservando datos anteriores, credenciales, revocación, expiración, CSRF, pertenencia y cookies de producción.
+- Frontend: servicios API/auth, AuthProvider/ProtectedRoute, AuthPage y DashboardPage, estilos separados en auth.css, rutas, navegación autenticada y proxy Vite. LandingPage, LandingUI, App.css y componentes/hooks de interacciones existentes conservados sin editar en esta tarea. Se respetaron los cambios de documentación recientes al añadir nuevas entradas.
+- Verificación por fases: primera fase backend 55 pruebas aprobadas en PostgreSQL temporal real; primera compilación React aprobada tras permiso de ejecución fuera del sandbox. Seis pruebas Playwright aprobadas con Edge, React/FastAPI/PostgreSQL reales, registro/login/recarga/logout revocado, errores, rutas privadas y formularios desktop/móvil. Se inspeccionaron las capturas login-desktop y register-mobile de test-results (ignoradas por Git, sin contraseñas visibles). API auxiliar solo en server/tests, con cierre controlado que retira la base temporal.
+- Incidencias resueltas: descarga inicial de pwdlib y Playwright bloqueada por entorno/caché, reintentos autorizados completados; build y navegador bloqueados inicialmente por spawn EPERM, ejecutados con aprobación fuera del sandbox. Advertencia inicial de setState en efecto resuelta antes de lint final. Un parche no coincidió con el BOM de SiteLayout: no se aplicó parcialmente y se reintentó con contexto correcto.
+- Archivos adicionales: ejemplos .env separados server/client, configuración y tests Playwright, auxiliar browser_server, .gitignore para resultados, AGENTS, README, client/README y documentos API/ARQUITECTURA/DECISIONES/PROMPTS. Los cambios ajenos del árbol se preservan; el ejemplo raíz apareció eliminado durante el trabajo y no se restauró.
+- Límites: ninguna migración o asignación de propietarios ejecutada en splitly_dev ni producción. El procedimiento manual está en README. Sin push, proveedores externos ni secretos reales generados. Faltan medidas de operación pública (rate limiting persistente, recuperación/verificación de correo, TLS/dominios y auditoría del despliegue); no se afirma preparación integral para producción. No se implementan gastos/cálculos ni CRUD visual completo del dashboard.
+- Verificación final: pytest 56/56 (incluida cookie Secure/__Host- de producción), pip check sin incompatibilidades, npm run lint sin advertencias, npm run build aprobado (456 módulos, JS 421,07 kB / 134,91 kB gzip). Segunda ejecución Playwright: 6/6 con API/DB reales, incluyendo un grupo creado en PostgreSQL y mostrado al recargar dashboard; proceso API terminó limpiamente. git diff --check sin errores de whitespace; avisos LF/CRLF de Git y avisos de movimiento reducido/NO_COLOR del entorno no bloqueantes. .env de server/client y test-results excluidos por Git; sin archivos de secretos rastreados en las extensiones comprobadas. Python 3.14.5 y Edge en Windows; otros navegadores y entorno de producción no verificados.

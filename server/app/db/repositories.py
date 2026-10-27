@@ -7,12 +7,13 @@ from sqlmodel import Session, select
 from app.models import Group, Member
 
 
-def find_group(session: Session, group_id: UUID) -> Group | None:
-    return session.get(Group, group_id)
+def find_group(session: Session, group_id: UUID, owner_id: UUID) -> Group | None:
+    return session.exec(select(Group).where(Group.id == group_id, Group.owner_id == owner_id)).first()
 
 
-def list_groups(session: Session) -> list[Group]:
-    return list(session.exec(select(Group).order_by(Group.created_at, Group.id)).all())
+def list_groups(session: Session, owner_id: UUID) -> list[Group]:
+    return list(session.exec(select(Group).where(Group.owner_id == owner_id)
+                             .order_by(Group.created_at, Group.id)).all())
 
 
 def find_member(session: Session, group_id: UUID, member_id: UUID) -> Member | None:
