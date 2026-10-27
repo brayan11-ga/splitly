@@ -33,6 +33,7 @@ export async function apiRequest(path, { method = 'GET', body, signal } = {}) {
     const messages = {
       401: path === '/auth/login' ? 'Correo o contraseña incorrectos.' : 'Tu sesión terminó. Inicia sesión de nuevo.',
       403: 'No pudimos validar esta solicitud. Recarga la página e inténtalo de nuevo.',
+      404: 'No encontramos este recurso o no tienes acceso a él.',
       409: path === '/auth/register' ? 'No pudimos registrar ese correo. Prueba iniciar sesión.' : 'Hay registros relacionados que impiden esta operación.',
       422: 'Revisa los datos del formulario.',
       429: 'Demasiados intentos. Espera antes de volver a intentarlo.',

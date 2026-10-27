@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { AuthStatus } from '../auth/ProtectedRoute'
 import { Arrow } from '../components/LandingUI'
@@ -18,6 +18,7 @@ export default function AuthPage({ kind }) {
   const isRegister = kind === 'register'
   const { status, authenticate } = useAuth()
   const navigate = useNavigate()
+  const { state } = useLocation()
   const [values, setValues] = useState({ full_name: '', email: '', password: '', confirmation: '' })
   const [errors, setErrors] = useState({})
   const [error, setError] = useState('')
@@ -55,6 +56,7 @@ export default function AuthPage({ kind }) {
   return <main id="contenido" className="shell auth-page"><div className="auth-layout">
     <aside className="auth-story"><Link className="eyebrow auth-back" to="/">← Volver al inicio</Link><p className="eyebrow text-lavender">Splitly / Colombia</p><h1>{isRegister ? <>Los buenos <span>planes</span> empiezan aquí.</> : <>Qué bueno verte <span>de nuevo.</span></>}</h1><p>{isRegister ? 'Un lugar para organizar los grupos y las personas con quienes compartes tus planes.' : 'Tus planes tienen su espacio. Entra para volver a tus grupos.'}</p><div className="auth-manifesto"><span className="eyebrow text-lime">01 / Menos cuentas pendientes</span><p>Más planes juntos.<br />Más tiempo para lo que importa.</p></div><span className="eyebrow auth-prototype">Prototipo / Usa solo datos ficticios</span></aside>
     <section className="auth-form-panel" aria-labelledby="auth-heading"><span className="eyebrow auth-badge">{isRegister ? 'Nuevo usuario / 01' : 'Splitly acceso'}</span><h2 id="auth-heading">{title}</h2><p>{isRegister ? 'Empieza por lo esencial. El próximo plan lo pones tú.' : 'Ingresa tu correo y contraseña para continuar.'}</p>
+      {state?.notice && <p role="status">{state.notice}</p>}
       <form onSubmit={submit} noValidate aria-busy={loading}>
         {isRegister && <div className="auth-field"><label htmlFor="full_name">Nombre completo</label><input id="full_name" name="full_name" value={values.full_name} onChange={onChange} autoComplete="name" maxLength={120} required aria-invalid={!!errors.full_name} aria-describedby={errors.full_name ? 'full_name-error' : undefined} />{errors.full_name && <p id="full_name-error" className="field-error">{errors.full_name}</p>}</div>}
         <div className="auth-field"><label htmlFor="email">Correo electrónico</label><input id="email" name="email" type="email" value={values.email} onChange={onChange} autoComplete="email" autoCapitalize="none" spellCheck={false} maxLength={320} required aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />{errors.email && <p id="email-error" className="field-error">{errors.email}</p>}</div>

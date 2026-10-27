@@ -7,7 +7,9 @@ import AuthProvider from './auth/AuthProvider'
 import ProtectedRoute from './auth/ProtectedRoute'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
+import GroupsPage from './pages/GroupsPage'
+import GroupDetailPage from './pages/GroupDetailPage'
 import './App.css'
 export default function App() {
-  return <MotionConfig reducedMotion="user"><BrowserRouter><AuthProvider><a className="skip-link" href="#contenido">Saltar al contenido</a><SiteHeader /><Routes><Route path="/" element={<LandingPage />} /><Route path="/login" element={<AuthPage key="login" kind="login" />} /><Route path="/register" element={<AuthPage key="register" kind="register" />} /><Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} /><Route path="*" element={<PendingPage kind="missing" />} /></Routes><SiteFooter /></AuthProvider></BrowserRouter></MotionConfig>
+  return <MotionConfig reducedMotion="user"><BrowserRouter><AuthProvider><a className="skip-link" href="#contenido">Saltar al contenido</a><SiteHeader /><Routes><Route path="/" element={<LandingPage />} /><Route path="/login" element={<AuthPage key="login" kind="login" />} /><Route path="/register" element={<AuthPage key="register" kind="register" />} /><Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} /><Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} /><Route path="/groups/:groupId" element={<ProtectedRoute><GroupDetailPage /></ProtectedRoute>} /><Route path="*" element={<PendingPage kind="missing" />} /></Routes><SiteFooter /></AuthProvider></BrowserRouter></MotionConfig>
 }

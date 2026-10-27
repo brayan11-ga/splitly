@@ -228,3 +228,42 @@ IMPORTANTE: tenemos poco tiempo para finalizar el hackathon. Prioriza una implem
 - Archivos adicionales: ejemplos .env separados server/client, configuración y tests Playwright, auxiliar browser_server, .gitignore para resultados, AGENTS, README, client/README y documentos API/ARQUITECTURA/DECISIONES/PROMPTS. Los cambios ajenos del árbol se preservan; el ejemplo raíz apareció eliminado durante el trabajo y no se restauró.
 - Límites: ninguna migración o asignación de propietarios ejecutada en splitly_dev ni producción. El procedimiento manual está en README. Sin push, proveedores externos ni secretos reales generados. Faltan medidas de operación pública (rate limiting persistente, recuperación/verificación de correo, TLS/dominios y auditoría del despliegue); no se afirma preparación integral para producción. No se implementan gastos/cálculos ni CRUD visual completo del dashboard.
 - Verificación final: pytest 56/56 (incluida cookie Secure/__Host- de producción), pip check sin incompatibilidades, npm run lint sin advertencias, npm run build aprobado (456 módulos, JS 421,07 kB / 134,91 kB gzip). Segunda ejecución Playwright: 6/6 con API/DB reales, incluyendo un grupo creado en PostgreSQL y mostrado al recargar dashboard; proceso API terminó limpiamente. git diff --check sin errores de whitespace; avisos LF/CRLF de Git y avisos de movimiento reducido/NO_COLOR del entorno no bloqueantes. .env de server/client y test-results excluidos por Git; sin archivos de secretos rastreados en las extensiones comprobadas. Python 3.14.5 y Edge en Windows; otros navegadores y entorno de producción no verificados.
+
+## 2026-10-27 — Frontend de grupos y participantes conectado a la API
+- Herramienta: Codex.
+- Objetivo: gestión completa de grupos/participantes sobre API real, preservando autenticación y Landing.
+- Extractos textuales del prompt recibido (completo en esta conversación):
+
+```text
+OBJETIVO PRINCIPAL:
+Implementar completamente la gestión de grupos y participantes en el frontend, utilizando la API real existente.
+```
+
+```text
+IMPORTANTE:
+- Reutiliza el mecanismo de cookies HttpOnly y CSRF existente.
+- No almacenar tokens o sesiones en LocalStorage.
+- No aceptar IDs de propietario desde el frontend.
+- No realizar cambios innecesarios en el backend.
+- No utilizar datos simulados como si fueran datos reales.
+- No romper login, registro ni logout.
+- No modificar la Landing Page innecesariamente.
+```
+
+```text
+RESTRICCIONES:
+- Trabaja principalmente en client/.
+- No crees nuevos endpoints si los actuales son suficientes.
+- No hagas git push automáticamente.
+- Conserva el diseño original de Splitly.
+- Prioriza funcionalidad real sobre efectos decorativos.
+```
+
+- Inspección: AGENTS, README, requisitos, API, arquitectura, decisiones y prompts; dashboard, auth, cliente HTTP, esquemas/routers reales, configuración Playwright; HTML y capturas Stitch de Mis grupos y Detalle, tokens DESIGN.md.
+- Archivos creados: client/src/services/groups.js, hooks/useRemoteResource.js, components/workspace/{WorkspaceNav,ResourceState,GroupCard,ActionDialog,GroupsPanel}.jsx, pages/{GroupsPage,GroupDetailPage}.jsx, utils/format.js, workspace.css y tests/groups.spec.js.
+- Archivos modificados: client/src/App.jsx, pages/DashboardPage.jsx, services/api.js (mensaje 404), auth/ProtectedRoute.jsx y pages/AuthPage.jsx (explicación al redirigir por sesión), README.md, client/README.md, docs/ARQUITECTURA.md, DECISIONES.md y este registro. Landing, backend y dependencias conservados. Se preservaron los cambios ajenos iniciales en .gitignore, AGENTS y el ejemplo .env raíz eliminado.
+- Implementación: dashboard con creación/vista previa; /groups con búsqueda/CRUD; /groups/:groupId con CRUD de participantes y edición/borrado de grupo. Formularios solo name, sin inventar campos. Estado confirmado por REST y actualizado tras éxito; consultas abortables y recarga explícita. Diálogos nativos con confirmación, foco/Escape y Motion según preferencia.
+- Verificación inicial: npm run lint aprobado tras separar el formato de fecha del componente para Fast Refresh; build aprobado tras ejecución autorizada fuera del sandbox por spawn EPERM. Playwright 12/12 con React/FastAPI/PostgreSQL temporal reales y Edge, incluyendo seis pruebas previas de auth y seis de gestión. 403/422 y 409 proceden del backend; el error de red se induce abortando peticiones. Se inspeccionaron capturas de grupos, detalle y diálogo desktop/móvil; se mejoró la separación de acciones de participantes en móvil.
+- Correcciones: dos parches con contexto inválido no se aplicaron parcialmente; se dividieron y reordenaron las secciones de documentación. No se alteraron archivos ajenos para resolverlos.
+- Límites: sin nuevos endpoints/migraciones/backend, sin gastos, balances ni cálculos, sin push. No se borraron datos de splitly_dev; solo bases temporales. Sin nuevas pruebas de cálculo porque no hay lógica financiera nueva. Quedan revisión con lector de pantalla, zoom 200 %, 320 px, otros navegadores y dominio de producción; sincronización entre pestañas mediante Actualizar, sin tiempo real.
+- Verificación final: npm run lint sin advertencias; npm run build aprobado (467 módulos; JS 435,62 kB / 138,36 kB gzip; CSS 33,86 kB / 7,93 kB gzip). Segunda ejecución Playwright 12/12 tras los ajustes de móvil y vista previa; cierre controlado de la API temporal completado. git diff --check sin errores; backend, modelos, migraciones y archivos de Landing sin diferencias de esta tarea. Avisos no bloqueantes del entorno NO_COLOR y Motion con reduced motion.

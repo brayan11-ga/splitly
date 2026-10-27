@@ -11,15 +11,23 @@ npm run lint
 
 - `/`: hero editorial, pasos, ejemplo ilustrativo en COP, beneficios y CTA.
 - `/login` y `/register`: formularios reales con cookies HttpOnly y CSRF; usuarios autenticados pasan a dashboard.
-- `/dashboard`: ruta protegida, nombre del usuario, listado real de grupos propios, estados vacío/error/carga y logout.
+- `/dashboard`: tres grupos propios recientes, crear grupo y navegación; protegido con logout.
+- `/groups`: listado completo, búsqueda por nombre y creación/edición/eliminación confirmada.
+- `/groups/:groupId`: detalle real, editar/eliminar grupo y CRUD de participantes con confirmaciones.
 - Cualquier otra ruta: página de ruta no encontrada.
 - React Router para navegación. En hosting estático, configurar fallback de rutas a `index.html` para las visitas directas (no reescribir peticiones de assets).
 - Tailwind integrado con el plugin de Vite; tokens en `src/index.css`, composición editorial en `src/App.css`.
 - Space Grotesk y Hanken Grotesk servidas localmente con Fontsource; sin CDN de fuentes ni scripts Stitch.
 - Motion aparece una vez por sección. La preferencia de movimiento reducido desactiva las entradas y las transiciones CSS.
-- El contenido financiero de la landing es un ejemplo fijo sin cálculos ni pagos. Autenticación y dashboard sí consultan el backend; la UI completa de gestión de grupos y gastos sigue pendiente.
+- El contenido financiero de la landing es un ejemplo fijo sin cálculos ni pagos. Autenticación y gestión completa de grupos/participantes consultan el backend real. Gastos y balances siguen pendientes.
 
 ## Revisión manual
+
+La gestión reutiliza `services/api.js` mediante `services/groups.js`; cargas cancelables en useRemoteResource, componentes en `components/workspace/`, fechas en utils/format.js y estilos en workspace.css. No se cambian LandingPage, App.css ni sus efectos. Sin dependencias nuevas o almacenamiento en localStorage.
+
+Los formularios solo envían name. Cancelar/Escape no modifica datos; eliminar requiere confirmación y espera 204. Un 409 al eliminar grupo enlaza al detalle para retirar antes sus participantes. 401 redirige al login con explicación; 403/422 mantienen formulario; 404 oculta gestión. Actualizar recoge cambios externos.
+
+`tests/groups.spec.js` añade seis pruebas a las seis de auth: CRUD/persistencia/búsqueda; 409 y borrado desde lista; validación/Escape/foco y errores reales 403/422; grupos ajenos/UUID inválido; sesión revocada; error de carga/responsive/capturas. FastAPI/PostgreSQL temporal reales, sin tocar splitly_dev. Capturas de escritorio, detalle y diálogo a 390 px inspeccionadas. Quedan lector de pantalla, zoom, 320 px, otros navegadores y dominio final. No se añaden cálculos ni pruebas de cálculo en esta iteración.
 
 Abrir a 1440, 1024, 768, 390 y 320 px; comparar jerarquía y espaciado con Stitch, verificar ausencia de scroll horizontal, navegación por teclado, foco, anclas, zoom al 200 %, preferencia de movimiento reducido y navegación atrás/adelante. Probar visitas directas a `/login` y `/register` en el hosting final. La compilación y lint no sustituyen estas comprobaciones.
 

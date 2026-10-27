@@ -71,7 +71,7 @@ Hay autenticación y autorización por propietario; usar exclusivamente datos fi
 
 ## Landing pública (2026-10-27)
 
-El cliente conserva la landing pública editorial y sus efectos Motion. `/login` y `/register` son formularios funcionales y `/dashboard` es privado, con listado de grupos propios y cierre de sesión. El ejemplo financiero de la landing sigue siendo ficticio. Detalles en [client/README.md](client/README.md).
+El cliente conserva la landing pública editorial y sus efectos Motion. `/login` y `/register` son formularios funcionales; `/dashboard`, `/groups` y `/groups/:groupId` son privados. Incluyen grupos reales, gestión completa de grupos/participantes y cierre de sesión. El ejemplo financiero de la landing sigue siendo ficticio. Detalles en [client/README.md](client/README.md).
 
 ## Autenticación: configurar y ejecutar
 
@@ -106,6 +106,18 @@ python -m uvicorn app.main:app --reload
 La revisión `0002_auth_ownership` crea users y auth_sessions y añade owner_id nullable a groups con FK/índice. Conserva grupos y miembros previos; quedan sin propietario e invisibles para todos los usuarios. Ningún registro nuevo los reclama automáticamente. Para recuperarlos, un administrador debe verificar de forma independiente el usuario correcto y los grupos, y ejecutar una asignación explícita revisada en una transacción: `UPDATE groups SET owner_id = :usuario_verificado WHERE id = :grupo_verificado AND owner_id IS NULL`. Comprobar que se actualiza exactamente una fila antes de confirmar; no usar una actualización masiva ni asignar al primer usuario registrado. No se ejecutó este paso.
 
 ## Probar el flujo completo
+
+| Ruta frontend | Función |
+|---|---|
+| `/dashboard` | Tres grupos propios más recientes, creación y acceso a lista/detalle |
+| `/groups` | Todos los grupos, búsqueda por nombre, crear/editar/eliminar con confirmación |
+| `/groups/:groupId` | Nombre/fecha reales, editar/eliminar grupo y CRUD de participantes |
+
+Crear un grupo, abrir su tarjeta y añadir participantes. Cancelar/Escape no envía escrituras. Los borrados requieren confirmación; un grupo con participantes devuelve 409 y ofrece un enlace al detalle para retirarlos primero. Cada pantalla se actualiza tras el éxito REST y consulta de nuevo al entrar. Actualizar recoge cambios de otra pestaña; no hay sincronización en tiempo real. La búsqueda local ignora acentos y mayúsculas.
+
+Componentes compartidos en `client/src/components/workspace/`, acceso REST en `services/groups.js`, cargas cancelables en `hooks/useRemoteResource.js`, fechas en `utils/format.js` y estilos `workspace.css`. Se reutilizan cookies/CSRF y cliente HTTP, sin nuevos endpoints, dependencias o migraciones. No se inventan categorías, fotos, saldos ni totales. Gastos y balances siguen pendientes.
+
+`npm test` incluye seis recorridos nuevos de CRUD, navegación, búsqueda, recarga, cancelación, 409 real, grupos ajenos, errores CSRF/validación y sesión revocada, además de los seis de autenticación. Se ejecutan con PostgreSQL temporal real sin eliminar datos de splitly_dev. Revisión manual pendiente: lector de pantalla, zoom 200 %, 320 px, otros navegadores y visitas directas en el dominio HTTPS. Configurar fallback SPA sin reescribir `/api` ni assets a index.html.
 
 Con la migración aplicada manualmente, iniciar API en 8000 y `npm run dev` desde client. Abrir `http://localhost:5173/register`, registrar nombre/correo ficticios y una frase de 15–128 caracteres. Debe llevar a `/dashboard`; recargar mantiene la sesión por `/api/auth/me`. Cerrar sesión lleva a login e invalida la cookie en el servidor; una visita directa a dashboard vuelve a login. Iniciar sesión con el mismo correo recupera únicamente los grupos propios. Ver [docs/API.md](docs/API.md) para Swagger y CSRF.
 

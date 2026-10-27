@@ -59,3 +59,11 @@ Actualizar cuando se implemente o cambie alguna decisión.
 - React usa AuthProvider, /me, fetch credentialed y CSRF solo en memoria; sin localStorage/sessionStorage para secretos. Formularios inspirados en Stitch con etiquetas, foco, confirmación, errores y loading; no se copian garantías AES-256/auditorías, estadísticas ficticias, recuperación de contraseña ni botones sociales sin funcionalidad.
 - Playwright se incorpora únicamente como dependencia de desarrollo para pruebas reales React/FastAPI/PostgreSQL; los tests usan bases temporales independientes, migración de datos anteriores y navegador Edge instalado, sin modificar splitly_dev. Capturas sintéticas de formularios sin contraseña en resultados ignorados por Git; traces/videos desactivados.
 - Pendientes de producción: rate limiting persistente/gateway, recuperación y verificación de correo, TLS/dominios reales, política de limpieza de sesiones expiradas y revisión de despliegue. Registro duplicado devuelve 409 por requisito y permite inferencia de disponibilidad del email. No se presenta como auditoría de seguridad ni se publica/pushea.
+
+## 2026-10-27 — Gestión completa de grupos y participantes en React
+- Se conserva la API y autenticación existentes. Los diseños Mis grupos/Detalle Stitch se adaptan a name/id/created_at y group_id, sin categorías, imágenes, saldos, gastos o funciones financieras inexistentes.
+- Componentes compartidos para navegación, tarjetas, cargas y formularios/confirmaciones. Diálogo HTML nativo con foco modal, Escape y restauración de foco; Motion breve según reduced motion. Sin nuevas dependencias ni Three.js.
+- Estado transitorio actualizado tras confirmar REST; consulta fresca al entrar y botón Actualizar para cambios externos. Sin persistencia local ni promesas de sincronización entre pestañas en tiempo real.
+- 409 conserva el grupo y conduce a gestionar participantes; confirmación explícita para ambos tipos de borrado. Los formularios solo envían name y nunca owner_id.
+- Dashboard resume tres grupos recientes; /groups contiene lista/búsqueda y /groups/:groupId gestiona grupo/participantes. Búsqueda local insensible a acentos y mayúsculas.
+- Se amplían las pruebas reales React/FastAPI/PostgreSQL temporal y se mantienen las de autenticación. Sin cambios de backend, migraciones, datos de splitly_dev o push.

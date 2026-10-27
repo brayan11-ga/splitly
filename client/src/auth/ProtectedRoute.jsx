@@ -10,6 +10,6 @@ export function AuthStatus() {
 export default function ProtectedRoute({ children }) {
   const { status } = useAuth()
   if (status === 'loading' || status === 'error') return <AuthStatus />
-  if (status !== 'authenticated') return <Navigate to="/login" replace />
+  if (status !== 'authenticated') return <Navigate to="/login" replace state={{ notice: 'Inicia sesión para acceder a tus grupos. Si tu sesión terminó, puedes volver a entrar.' }} />
   return children
 }
