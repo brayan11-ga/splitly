@@ -32,7 +32,7 @@ Liquidación: emparejar saldo negativo y positivo, generar transferencias de mí
 Stitch para wireframes verificables. React Bits/Motion para fondos, microinteracciones y cambios de estado; Recharts para reportes. React Three Fiber / Three.js solo para una escena opcional con lazy loading; fallback estático. Evitar 3D en formularios y tablas. Reducir animación si `prefers-reduced-motion`.
 
 ## Infraestructura
-Supabase PostgreSQL (credenciales solamente en backend), FastAPI en Render, cliente Vite en Vercel. CORS debe permitir solo orígenes esperados. Verificar proveedores y cuotas al desplegar.
+Supabase PostgreSQL (credenciales solamente en backend), FastAPI en Render y cliente Vite en Cloudflare Pages. Pages Functions reenvía exclusivamente `/api` y `/api/*` a `API_ORIGIN` HTTPS configurado en ejecución. El navegador usa el origen Pages con `VITE_API_URL=` vacío; no necesita cookies de terceros de Render. CORS/CSRF conservan el Origin real del navegador y deben permitir sus dominios HTTPS exactos. Pasos de configuración y comprobación en README.
 
 ## Entornos y ciclo de esquema
 - Desarrollo: PostgreSQL local Windows, base `splitly_dev`; producción: PostgreSQL Supabase. Ambos usan SQLModel, psycopg 3 y `DATABASE_URL`, sin alternativa SQLite.

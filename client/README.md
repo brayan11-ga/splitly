@@ -65,3 +65,9 @@ Configurar backend y aplicar manualmente 0002 según README raíz. `client/.env.
 Desde client, `npm test` ejecuta Playwright con React, FastAPI y PostgreSQL temporal real. Requiere dependencias backend, PostgreSQL local y permiso CREATEDB; inicia procesos exclusivos en 5175/8001 y NO usa splitly_dev como base de pruebas. En Windows usa Edge instalado; se puede elegir Chrome con PLAYWRIGHT_CHANNEL=chrome. En Linux/macOS instalar Chromium con `npx playwright install chromium`. La API auxiliar en server/tests incluye cierre solo para pruebas; esa ruta no existe en app.main. Si se interrumpe abruptamente, revisar restos de bases temporales.
 
 Verificados seis flujos: rutas protegidas/landing, registro/cookie/recarga/logout revocado, login/error genérico, duplicado/confirmación, error de red y responsive/visibilidad de contraseña. Capturas de login desktop y registro a 390 px en test-results (ignorado), inspeccionadas visualmente. La suite respeta movimiento reducido; no reemplaza auditoría de accesibilidad ni pruebas del dominio HTTPS definitivo. Las interacciones originales de la landing siguen requiriendo la revisión manual descrita arriba.
+
+## Proxy de producción Cloudflare Pages
+
+Configuración completa en README de la raíz, sección «Despliegue: Cloudflare Pages → Render → Supabase». En Pages: raíz client, build npm run build, salida dist, VITE_API_URL vacío y API_ORIGIN=https://TU-API.onrender.com como binding de Functions. functions/ permanece fuera de dist. public/_routes.json se copia durante build; /api no cae al fallback React.
+
+`npm run test:proxy` ejecuta las pruebas Node de transporte del handler con upstream controlado. `npm test` mantiene los flujos locales con FastAPI/PostgreSQL; no prueba los dominios de producción. Ver README raíz para comandos de Wrangler sin despliegue y revisión de cookies/CSRF en HTTPS real.

@@ -67,3 +67,11 @@ Actualizar cuando se implemente o cambie alguna decisión.
 - 409 conserva el grupo y conduce a gestionar participantes; confirmación explícita para ambos tipos de borrado. Los formularios solo envían name y nunca owner_id.
 - Dashboard resume tres grupos recientes; /groups contiene lista/búsqueda y /groups/:groupId gestiona grupo/participantes. Búsqueda local insensible a acentos y mayúsculas.
 - Se amplían las pruebas reales React/FastAPI/PostgreSQL temporal y se mantienen las de autenticación. Sin cambios de backend, migraciones, datos de splitly_dev o push.
+
+## 2026-10-27 — Proxy de mismo origen en Cloudflare Pages
+- Cliente HTTP conserva credentials:include y X-CSRF-Token; VITE_API_URL vacío. Vite local permanece intacto.
+- Functions en client/functions/api/[[path]].js y api.js para la ruta exacta; public/_routes.json limita invocaciones a /api y /api/*. Fallback SPA nativo de Pages fuera de API, sin 404.html ni rewrite global.
+- API_ORIGIN es un binding de ejecución HTTPS sin ruta/query/credenciales. Ningún parámetro, cabecera o ruta del usuario controla el destino. Headers Host/hop-by-hop retirados; Origin, Cookie y CSRF conservados, sin fabricar confianza. Cuerpos sin interpretar y respuestas no-store.
+- Set-Cookie se copia como colección Headers, sin unir por comas ni modificar Secure/HttpOnly/SameSite/Path/Domain. Cookie __Host- host-only emitida a través de Pages; SameSite=lax compatible con /api en el mismo origen. Compatibilidad por contrato no equivale a validación de cookies en producción.
+- Fetch con redirect manual: redirecciones internas API vuelven al dominio del frontend, externas se bloquean; no se siguen redirecciones enviando cookies a terceros. Errores de conexión/configuración genéricos y sin logs de credenciales.
+- Pruebas Node sin nuevas dependencias para transporte/headers y regresión Playwright existente con PostgreSQL temporal; no se modifica backend, modelos, migraciones, gastos ni balances. No se aplica migración, push o despliegue. Configuración exacta de Render/Pages y recorrido HTTPS pendiente en README.

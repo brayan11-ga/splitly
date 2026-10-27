@@ -267,3 +267,41 @@ RESTRICCIONES:
 - Correcciones: dos parches con contexto inválido no se aplicaron parcialmente; se dividieron y reordenaron las secciones de documentación. No se alteraron archivos ajenos para resolverlos.
 - Límites: sin nuevos endpoints/migraciones/backend, sin gastos, balances ni cálculos, sin push. No se borraron datos de splitly_dev; solo bases temporales. Sin nuevas pruebas de cálculo porque no hay lógica financiera nueva. Quedan revisión con lector de pantalla, zoom 200 %, 320 px, otros navegadores y dominio de producción; sincronización entre pestañas mediante Actualizar, sin tiempo real.
 - Verificación final: npm run lint sin advertencias; npm run build aprobado (467 módulos; JS 435,62 kB / 138,36 kB gzip; CSS 33,86 kB / 7,93 kB gzip). Segunda ejecución Playwright 12/12 tras los ajustes de móvil y vista previa; cierre controlado de la API temporal completado. git diff --check sin errores; backend, modelos, migraciones y archivos de Landing sin diferencias de esta tarea. Avisos no bloqueantes del entorno NO_COLOR y Motion con reduced motion.
+
+## 2026-10-27 — Proxy de Cloudflare Pages para autenticación y CRUD
+- Herramienta: Codex.
+- Objetivo: preparar proxy de mismo origen Pages → Render conservando cookies HttpOnly, CSRF y sesiones existentes.
+- Extractos textuales del prompt real recibido (mensaje completo en la conversación):
+
+```text
+Necesito que implementes y verifiques un proxy del mismo origen en Cloudflare Pages.
+```
+
+```text
+5. Reenvía métodos, rutas, query strings, cuerpos, cabeceras necesarias, cookies y Set-Cookie.
+6. No reenvíes cabeceras Host inapropiadas.
+7. No permitas que el cliente elija arbitrariamente el servidor de destino.
+8. No almacenes secretos en variables VITE_.
+9. Conserva las cookies y la protección CSRF existentes.
+10. Comprueba la compatibilidad de los atributos Secure, HttpOnly, SameSite y Path de las cookies al operar mediante el proxy.
+11. Mantén VITE_API_URL vacío para consumir /api desde el mismo origen.
+12. No rompas el proxy local de Vite.
+```
+
+```text
+- No cambies modelos ni migraciones.
+- No implementes gastos o balances.
+- No agregues animaciones.
+- No hagas push ni despliegues automáticamente.
+- Prioriza el funcionamiento del registro, login, logout y CRUD de grupos.
+```
+
+- Inspección: instrucciones/documentos, cliente HTTP/auth, Vite, rutas React, configuración/cookies/dependencias CSRF de FastAPI y pruebas de navegador. Se preservan cambios ajenos previos en AGENTS, .gitignore raíz, .env.example raíz eliminado y design/ sin rastrear.
+- Archivos: client/functions/api/[[path]].js y api.js, public/_routes.json, proxy-tests/proxy.test.js; client/package.json (script test:proxy), .env.example, .gitignore, README; README raíz y docs/ARQUITECTURA.md, DECISIONES.md, PROMPTS.md.
+- Sin cambios en cliente HTTP, Vite, cookies/backend, modelos, migraciones o dependencias del proyecto. No se creó .env ni se escribieron secretos. VITE_API_URL vacío confirmado en ejemplo; no existe .env local del cliente.
+- Verificación: npm run test:proxy, 12/12 Node con fetch controlado; npm run lint sin advertencias; npm run build aprobado (467 módulos). npm test, 12/12 Playwright con React/FastAPI/PostgreSQL temporal y Edge, incluidos registro, cookie HttpOnly, recarga, login, logout revocado, grupos y participantes; cierre cooperativo de API temporal completado. Estas pruebas de navegador existentes usan la API local absoluta, no el proxy de Pages.
+- Incidencias: test runner y Vite bloqueados inicialmente por spawn EPERM del sandbox; reintentos autorizados fuera del sandbox aprobados. Avisos no bloqueantes NO_COLOR/FORCE_COLOR y Motion/reduced motion en Playwright. No se presentan como errores de la aplicación.
+- Límites: sin conexión a Render/Supabase, sin dominios reales facilitados, sin validar aceptación/envío/revocación de cookies a través de Pages en producción. Procedimiento HTTPS documentado en README. No hay cálculos nuevos ni pruebas de cálculo existentes para esta tarea.
+- Verificación Cloudflare adicional: `npx --yes wrangler@4 pages functions build --outdir .pages-build` aprobada con Wrangler 4.153.0 («Compiled Worker successfully»), sin desplegar ni añadir dependencias al proyecto. Runtime local Pages en 127.0.0.1:8788 verificado con `node proxy-tests/pages-smoke.js`: seis rutas SPA HTML 200 y cuatro API JSON 500/no-store ante API_ORIGIN HTTP deliberadamente inválido. Ninguna llamada al upstream. Esto prueba routing real y manejo de configuración, no cookies de producción.
+- Runtime local usó compatibility_date 2026-10-23 por defecto; aviso revisado y fecha fijada explícitamente en comandos recomendados del README y configuración de Pages. Proceso Wrangler local detenido al finalizar. Archivo adicional creado: client/proxy-tests/pages-smoke.js.
+- Lint final sin advertencias; git diff --check sin errores de whitespace. Confirmado _routes.json en dist; sin diferencias en server/, client/src/, Vite o package-lock.json respecto al inicio de esta tarea.

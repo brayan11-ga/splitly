@@ -22,3 +22,10 @@
 - `npm run build` y `npm run lint`, desde client: aprobados. Compilación ejecutada con autorización fuera del sandbox tras EPERM.
 - Pendiente: captura de la implementación y comparación visual en navegador; no se afirma validación visual ni accesibilidad auditada automáticamente.
 - La landing no demuestra persistencia ni pagos; contiene datos ilustrativos y rutas de acceso provisionales.
+
+## 2026-10-27 — Proxy Pages preparado, producción pendiente
+- Node: 12/12 pruebas de handler con upstream controlado (headers, cookies múltiples, CSRF, métodos/cuerpos, errores y redirecciones).
+- Playwright: 12/12 flujos locales React/FastAPI/PostgreSQL temporal; no pasan por Pages.
+- Lint/build aprobados; Wrangler 4.153.0 compila las Functions sin desplegar.
+- Runtime Pages local: seis rutas SPA HTML 200 y cuatro API JSON 500/no-store con binding intencionalmente inválido; no se contacta Render. Script reproducible en client/proxy-tests/pages-smoke.js.
+- Pendiente: probar HTTPS de Pages → Render → Supabase con dominios/configuración propios, aceptación de cookie __Host-, CSRF, recarga y logout/revocación. No se afirma éxito de cookies en producción.
