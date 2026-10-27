@@ -16,3 +16,9 @@
 4. Stack: React/Vite + FastAPI/SQLModel + PostgreSQL en Supabase.
 5. IA: Stitch para diseño, Codex para implementación y revisión, ChatGPT para planeación.
 6. Aprendizajes y próximos pasos: autenticación y reparto personalizado.
+
+## 2026-10-27 — Verificación de la landing pública
+- Diseño original inspeccionado: `design/stitch/splitly_landing_page_desktop/screen.png` y `code.html`; sistema en `design/stitch/DESIGN.md`.
+- `npm run build` y `npm run lint`, desde client: aprobados. Compilación ejecutada con autorización fuera del sandbox tras EPERM.
+- Pendiente: captura de la implementación y comparación visual en navegador; no se afirma validación visual ni accesibilidad auditada automáticamente.
+- La landing no demuestra persistencia ni pagos; contiene datos ilustrativos y rutas de acceso provisionales.

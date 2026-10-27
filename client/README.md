@@ -1,16 +1,23 @@
-# React + Vite
+﻿# Frontend Splitly
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Landing pública basada en `design/stitch/DESIGN.md` y la captura/HTML de la landing de Stitch.
 
-Currently, two official plugins are available:
+```powershell
+npm install
+npm run dev
+npm run build
+npm run lint
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- `/`: hero editorial, pasos, ejemplo ilustrativo en COP, beneficios y CTA.
+- `/login` y `/register`: páginas provisionales; no reciben datos ni autentican.
+- Cualquier otra ruta: página de ruta no encontrada.
+- React Router para navegación. En hosting estático, configurar fallback de rutas a `index.html` para las visitas directas (no reescribir peticiones de assets).
+- Tailwind integrado con el plugin de Vite; tokens en `src/index.css`, composición editorial en `src/App.css`.
+- Space Grotesk y Hanken Grotesk servidas localmente con Fontsource; sin CDN de fuentes ni scripts Stitch.
+- Motion aparece una vez por sección. La preferencia de movimiento reducido desactiva las entradas y las transiciones CSS.
+- El contenido financiero es un ejemplo fijo; no implementa cálculos ni persistencia, no se conecta al backend y no simula pagos exitosos.
 
-## React Compiler
+## Revisión manual
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Abrir a 1440, 1024, 768, 390 y 320 px; comparar jerarquía y espaciado con Stitch, verificar ausencia de scroll horizontal, navegación por teclado, foco, anclas, zoom al 200 %, preferencia de movimiento reducido y navegación atrás/adelante. Probar visitas directas a `/login` y `/register` en el hosting final. La compilación y lint no sustituyen estas comprobaciones.

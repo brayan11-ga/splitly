@@ -129,3 +129,33 @@ PRUEBAS:
 - Verificación: `python -m pytest -p no:cacheprovider` desde server: 40 pruebas aprobadas con PostgreSQL local real, incluyendo FK y persistencia confirmada desde otra conexión. Se creó una base aleatoria exclusiva splitly_test_<UUID>, se aplicó allí la migración existente y se retiró al finalizar; sin modificar datos de splitly_dev. Los tests HTTP se aíslan mediante transacciones/savepoints. No se usó SQLite ni persistencia en memoria.
 - Correcciones: README referenciaba server/.env.example, ausente en el árbol actual; se corrigió para usar las variables del ejemplo versionado en la raíz sin sobrescribir .env. No se imprimieron credenciales.
 - Límites: sin gastos, cálculos, autenticación, paginación ni cambios frontend. No hubo conexión a Supabase ni push a GitHub. Entorno verificado: Python 3.14.5; no se probó Python 3.11 por separado.
+
+## 2026-10-27 — Landing React desde Google Stitch
+- Herramienta: Codex.
+- Objetivo: implementar solo la landing pública con adaptación responsive y navegación provisional de acceso.
+- Extractos textuales del prompt real recibido (mensaje completo en esta conversación):
+
+```text
+Implementar la Landing Page pública de Splitly en React basándose en el diseño de Google Stitch.
+
+La inspiración creativa es la web de Lando Norris, pero conservando una identidad propia, sin copiar recursos visuales o elementos distintivos.
+```
+
+```text
+ALCANCE:
+- Implementar solo la Landing Page.
+- No implementar autenticación todavía.
+- No modificar el backend FastAPI.
+- No implementar dashboard ni formularios de login y registro.
+- Las rutas /login y /register podrán mostrar páginas provisionales claramente identificadas como pendientes.
+- No agregar efectos 3D pesados en esta iteración.
+- No incluir información sensible ni credenciales.
+```
+
+- Inspección: AGENTS, README, todos los documentos de docs, DESIGN.md, HTML y screen.png de la landing.
+- Archivos afectados: client/src/App.jsx, App.css, index.css, components/LandingUI.jsx, components/SiteLayout.jsx, pages/LandingPage.jsx, pages/PendingPage.jsx, client/index.html, public/favicon.svg, vite.config.js, package.json y lock; client/README.md, README y docs/DECISIONES.md, PROMPTS.md.
+- Implementación: hero, pasos, ejemplo COP, beneficios, CTA; Motion y navegación provisional. Evaluación de React Bits documentada en DECISIONES.
+- Incidencia: npm inicial bloqueado por caché sin paquetes; reintento de descarga solicitado mediante permiso del entorno.
+- Verificación final: `npm run build` desde client aprobada (446 módulos; JS 402,69 kB / 129,10 kB gzip; CSS 19,49 kB / 5,20 kB gzip). `npm run lint` desde client aprobada sin advertencias. `git diff --check` sin errores de whitespace (Git avisa conversión futura LF/CRLF).
+- Correcciones: compilación inicial bloqueada por spawn EPERM del sandbox; compilación autorizada fuera del sandbox aprobada. Se corrigió una advertencia de render impuro por Date usando el año de esta edición. Una llamada accidental de lint desde la raíz falló por ausencia de package.json; se repitió correctamente desde client.
+- Límites: no se ejecutó un navegador ni se generaron capturas de implementación; revisión manual pendiente según client/README.md. No hay pruebas de cálculo en server/tests ni lógica financiera nueva en esta iteración; el reparto mostrado es un ejemplo estático, no un motor validado. Backend intacto, sin push ni despliegue.

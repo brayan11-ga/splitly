@@ -32,3 +32,13 @@ Actualizar cuando se implemente o cambie alguna decisión.
 - Participantes bajo `/api/groups/{group_id}/members/{member_id}`; acceder desde otro grupo devuelve 404. Listas ordenadas por created_at/id.
 - Borrado de grupos con participantes rechazado con 409, sin cascada ni pérdida implícita de datos. El cliente debe eliminar primero cada participante. Las restricciones FK siguen protegiendo la integridad; conflictos de escritura revierten la transacción y no filtran mensajes del driver.
 - Pruebas PostgreSQL en una base local aleatoria `splitly_test_<UUID>` creada y retirada exclusivamente por la ejecución. Se aplica la migración existente solo allí. Transacciones externas y savepoints aíslan las pruebas HTTP; una prueba con conexión independiente verifica el commit real. No se escribe ni se borra en splitly_dev.
+
+## 2026-10-27 — Landing pública editorial
+- Landing React separada en páginas, layout y primitivas reutilizables. Solo rutas públicas `/`, `/login`, `/register` y fallback; las dos rutas de acceso son provisionales y no tienen formularios.
+- Se adapta el HTML y la captura de Stitch; se usa como fuente de tokens el YAML de DESIGN.md (lima #bff52a y lavanda #c0c1ff), que difiere de algunos colores de su prosa. Identidad propia sin recursos de Lando Norris.
+- Tailwind mediante plugin Vite, Motion para entradas progresivas y microinteracciones, fuentes locales Fontsource. Se mantienen React y Vite existentes.
+- React Bits evaluado: una aparición de texto ligera duplicaría la función de Motion; los fondos WebGL no aportan suficiente valor en esta iteración. Se conserva una decoración geométrica CSS estática y no se agrega React Bits ni 3D.
+- Preferencia de movimiento reducido, enlace para saltar al contenido, foco visible y navegación de secciones disponible también en móvil.
+- Se retiran del original estadísticas no verificadas, garantías comerciales, exportaciones, tiempo real y botones de pagos simulados. Ejemplo fijo de COP 90.000 entre tres personas, marcado como ficticio. No existe lógica financiera nueva ni almacenamiento en el navegador.
+- No se modifica FastAPI ni CORS. Su revisión de orígenes de producción sigue pendiente antes del despliegue según README.
+- El hosting del cliente deberá resolver rutas SPA hacia index.html. No se despliega ni se ejecuta git push.

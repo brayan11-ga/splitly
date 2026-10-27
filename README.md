@@ -68,3 +68,7 @@ La ejecución aplica la migración existente en esa base temporal, prueba CRUD e
 
 ## Seguridad y limitaciones
 Sin autenticación/autorización en este prototipo; usar exclusivamente datos ficticios. No subir secretos. Las demostraciones no equivalen a una app de finanzas segura en producción.
+
+## Landing pública (2026-10-27)
+
+El cliente implementa la landing pública editorial y rutas provisionales de acceso; iniciar con `cd client` y `npm run dev`. Detalles y revisión visual en [client/README.md](client/README.md). No incluye autenticación, dashboard ni conexión desde la landing a la API. El ejemplo financiero usa solo datos ficticios.
