@@ -25,3 +25,10 @@ Actualizar cuando se implemente o cambie alguna decisión.
 - Downgrade inicial bloqueado por implicar borrado de tablas. Migraciones futuras requieren revisión manual; se omiten tablas externas en propuestas de borrado de autogenerate.
 - Comprobación local separada del health HTTP: lectura `SELECT 1`, solo base `splitly_dev` en loopback, errores sin credenciales. Supabase queda documentado para una ejecución posterior autorizada.
 - Se verificaron diez pruebas (salud, CORS, sesiones, URLs, protección de credenciales y equivalencia DDL modelo/migración), cabecera Alembic y dependencias. La conexión real no se verificó: falta DATABASE_URL/server/.env, aunque el servicio PostgreSQL de Windows aparece activo.
+
+## 2026-10-27 — CRUD de grupos y participantes
+- Se reutilizan Group, Member y get_session sin alterar modelos ni agregar migraciones. Routers HTTP, esquemas Pydantic, servicios con transacciones explícitas y consultas en `db/repositories.py`.
+- Nombre obligatorio en creación y PATCH, texto estricto recortado y no vacío; campos adicionales rechazados. PATCH solo edita el nombre; se mantienen nombres duplicados permitidos por el esquema actual.
+- Participantes bajo `/api/groups/{group_id}/members/{member_id}`; acceder desde otro grupo devuelve 404. Listas ordenadas por created_at/id.
+- Borrado de grupos con participantes rechazado con 409, sin cascada ni pérdida implícita de datos. El cliente debe eliminar primero cada participante. Las restricciones FK siguen protegiendo la integridad; conflictos de escritura revierten la transacción y no filtran mensajes del driver.
+- Pruebas PostgreSQL en una base local aleatoria `splitly_test_<UUID>` creada y retirada exclusivamente por la ejecución. Se aplica la migración existente solo allí. Transacciones externas y savepoints aíslan las pruebas HTTP; una prueba con conexión independiente verifica el commit real. No se escribe ni se borra en splitly_dev.

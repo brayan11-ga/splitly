@@ -1,6 +1,6 @@
 # Splitly — Gastos compartidos
 
-Prototipo web para crear grupos, registrar gastos y calcular deudas simplificadas. **Estado: esqueleto del backend implementado** con salud, CORS y configuración PostgreSQL. El CRUD y los balances siguen pendientes.
+Prototipo web para crear grupos, registrar gastos y calcular deudas simplificadas. **Estado: backend con CRUD de grupos y participantes**, salud, CORS y PostgreSQL. Gastos y balances siguen pendientes.
 
 ## Stack
 - Cliente: React, Vite, Tailwind CSS, React Router, Motion, React Bits; Recharts para gráficas; Three.js + React Three Fiber solo de manera progresiva.
@@ -18,12 +18,12 @@ CRUD de grupos, participantes y gastos; reparto igualitario entre participantes 
 1. Instalar Node.js, Python 3.11+ y Git.
 2. `cd client && npm install && npm run dev`.
 3. En otra terminal: entrar a `server/`, ejecutar `python -m venv .venv` y activar el entorno (`.\.venv\Scripts\Activate.ps1` en PowerShell). Instalar con `python -m pip install -r requirements.txt`.
-4. Desde `server/`, copiar `Copy-Item .env.example .env`. Sustituir `DATABASE_URL` por una conexión PostgreSQL propia antes de usar persistencia. Las variables del sistema prevalecen sobre `.env`. `CORS_ORIGINS` es una lista separada por comas; permite por defecto `http://localhost:5173` y `http://127.0.0.1:5173`. Definir `VITE_API_URL` solo en `client/.env`; nunca copiar credenciales al cliente.
+4. Si no existe `server/.env`, crearlo con las variables del servidor indicadas en `.env.example` de la raíz (DATABASE_URL y CORS_ORIGINS). Sustituir `DATABASE_URL` por una conexión PostgreSQL propia antes de usar persistencia. Las variables del sistema prevalecen sobre `.env`. `CORS_ORIGINS` es una lista separada por comas; permite por defecto `http://localhost:5173` y `http://127.0.0.1:5173`. Definir `VITE_API_URL` solo en `client/.env`; nunca copiar credenciales al cliente.
 5. Lanzar la API: `python -m uvicorn app.main:app --reload`, desde `server/`; revisar `http://127.0.0.1:8000/docs`.
 6. Consultar `http://127.0.0.1:8000/api/health`: devuelve `{"status":"ok"}`. No requiere conexión a PostgreSQL y no verifica su disponibilidad.
 7. Desde `server/`, ejecutar `python -m pytest`.
 
-La conexión usa SQLModel y psycopg 3, con sesiones por petición cuando se incorpore el CRUD. No se crean tablas ni se aplican migraciones al iniciar. Antes del despliegue se deben configurar los orígenes CORS exactos de producción.
+La conexión usa SQLModel y psycopg 3, con sesiones por petición y transacciones explícitas en el CRUD. No se crean tablas ni se aplican migraciones al iniciar. Antes del despliegue se deben configurar los orígenes CORS exactos de producción. Consultar [el contrato y los pasos de Swagger](docs/API.md) para probar grupos y participantes.
 
 ## Base de datos y migraciones
 
@@ -43,11 +43,15 @@ python -m alembic check
 
 La comprobación ejecuta únicamente `SELECT 1`, acepta solo localhost/127.0.0.1/::1 y la base `splitly_dev`; devuelve código 1 si falta configuración o falla la conexión, sin imprimir credenciales. `upgrade head --sql` genera SQL sin conectarse a PostgreSQL ([documentación de Alembic](https://alembic.sqlalchemy.org/en/latest/offline.html)). La migración inicial crea `groups`, `members`, su FK y el índice de `group_id`. No reemplaza tablas existentes: si ya existen, detenerse y revisar el esquema; no borrar tablas ni marcar revisiones como aplicadas sin compararlas.
 
-Para cambios posteriores: `python -m alembic revision --autogenerate -m "descripcion"`, revisar el archivo generado y su SQL antes de aplicarlo. La validación de nombres y el CRUD todavía están pendientes. El downgrade inicial está bloqueado para evitar borrar datos accidentalmente.
+Para cambios posteriores: `python -m alembic revision --autogenerate -m "descripcion"`, revisar el archivo generado y su SQL antes de aplicarlo. El CRUD actual no requiere migraciones nuevas. El downgrade inicial está bloqueado para evitar borrar datos accidentalmente.
 
 Producción en Supabase (procedimiento futuro, no ejecutado): obtener del panel la conexión PostgreSQL directa o la conexión de sesión apropiada para migraciones y accesible desde el entorno de despliegue. Guardar `DATABASE_URL` como secreto del backend con `postgresql+psycopg://` y TLS (`sslmode=require`); nunca en Vite ni en archivos versionados. Revisar respaldo, destino y SQL, luego ejecutar desde un entorno autorizado `python -m alembic current`, `python -m alembic upgrade head` y `python -m alembic check`. Utilizar la misma cadena de revisiones que en desarrollo. No generar migraciones contra los esquemas internos de Supabase ni usar el pool de transacciones para migrar. `app.db.check` rechaza intencionalmente este entorno.
 
-Verificaciones de esta iteración: 10 pruebas aprobadas con `python -m pytest -p no:cacheprovider`, `pip check` sin incompatibilidades y revisión inicial reconocida por `alembic heads`. No se verificó PostgreSQL con credenciales: falta `server/.env`; no se aplicaron migraciones ni hubo conexión a Supabase.
+## Pruebas de backend
+
+Desde `server/`: `python -m pytest -p no:cacheprovider`. Las pruebas CRUD requieren PostgreSQL local y un usuario con permiso `CREATEDB` y acceso a la base administrativa `postgres`. Por defecto usan las credenciales de DATABASE_URL únicamente para crear una base temporal independiente `splitly_test_<UUID>`; nunca escriben en splitly_dev. Opcionalmente configura `TEST_DATABASE_URL` solo en `server/.env` o en el entorno del proceso para usar otro usuario local de pruebas. Se rechazan hosts remotos.
+
+La ejecución aplica la migración existente en esa base temporal, prueba CRUD e integridad referencial y retira únicamente la base creada por ella al finalizar. Sin conexión o permisos, las pruebas de integración fallan con un mensaje genérico; no se sustituyen por SQLite ni se omiten silenciosamente. Si el proceso se interrumpe abruptamente, podría quedar una base temporal: revisar antes de retirarla manualmente.
 
 ## Documentación
 - [Requisitos](docs/REQUISITOS.md)

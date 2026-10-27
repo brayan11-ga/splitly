@@ -12,7 +12,7 @@
 - `server/tests/`: pruebas pytest (incluida lógica de dinero).
 
 ## Modelo de datos
-El backend implementa `main.py`, configuración en `config.py`, router y esquema de salud, conexión/sesiones en `db/session.py` y modelos `Group`/`Member`. `services/` está reservado para el CRUD y los cálculos. La conexión a PostgreSQL es diferida y el endpoint de salud funciona sin `DATABASE_URL`.
+El backend implementa `main.py`, configuración en `config.py`, salud y CRUD de grupos/participantes. `routers/` traduce HTTP, `schemas/` valida y serializa, `services/` aplica reglas y confirma transacciones, y `db/repositories.py` concentra consultas SQLModel sobre `Group`/`Member`. La conexión en `db/session.py` es diferida y el endpoint de salud funciona sin `DATABASE_URL`. Cálculos y gastos siguen pendientes.
 
 - `groups`: id UUID, name, created_at.
 - `members`: id UUID, group_id FK, name, created_at.

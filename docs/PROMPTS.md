@@ -91,3 +91,41 @@ Restricciones:
 - Verificaciones: 10 pruebas aprobadas desde server, `alembic heads` reconoce `0001_groups_members`, `pip check` sin incompatibilidades y `git check-ignore -v` confirma exclusión de .env, claves y respaldos. `git ls-files` no mostró archivos sensibles rastreados. SQL inicial generado offline y comparado con metadata en pytest, sin conexión ni cambios de tablas.
 - Incidencias: instalación inicial de Alembic bloqueada; reintento con permiso instaló Alembic 1.20.1 y Mako. Faltan DATABASE_URL y server/.env: `python -m app.db.check` termina con código 1 sin conexión. Servicio PostgreSQL Windows activo, sin verificar acceso ni existencia de splitly_dev. Una ejecución desde la raíz encontró una carpeta antigua de caché sin permisos; se excluye su patrón en pytest.ini sin borrarla.
 - Límites: sin conexión a Supabase, sin aplicar migraciones, sin CRUD ni cálculos. Pruebas con Python 3.14.5; Python 3.11 no verificado por separado.
+
+## 2026-10-27 — CRUD persistente de grupos y participantes
+- Herramienta: Codex.
+- Objetivo: implementar los nueve endpoints REST de grupos y participantes sobre los modelos y sesiones existentes, sin frontend ni git push.
+- Extractos textuales del prompt real recibido (mensaje completo en esta conversación):
+
+```text
+OBJETIVO:
+Implementar el CRUD completo de grupos y participantes en FastAPI.
+
+ENDPOINTS DE GRUPOS:
+- POST /api/groups
+- GET /api/groups
+- GET /api/groups/{group_id}
+- PATCH /api/groups/{group_id}
+- DELETE /api/groups/{group_id}
+
+ENDPOINTS DE PARTICIPANTES:
+- POST /api/groups/{group_id}/members
+- GET /api/groups/{group_id}/members
+- PATCH /api/groups/{group_id}/members/{member_id}
+- DELETE /api/groups/{group_id}/members/{member_id}
+```
+
+```text
+PRUEBAS:
+- Crear, listar, consultar, editar y eliminar grupos.
+- Crear, listar, editar y eliminar participantes.
+- Verificar errores 404 y 422.
+- Verificar integridad referencial.
+- Utilizar una base de datos de pruebas aislada; nunca borrar información de splitly_dev para realizar pruebas.
+```
+
+- Archivos afectados: `server/app/main.py`; nuevos repositories, routers groups/members y dependencia compartida, schemas groups/members, servicios groups/members/errors; `server/tests/conftest.py`, `server/tests/test_crud.py`; README, API, ARQUITECTURA, DECISIONES y este registro.
+- Decisiones: nombres estrictos no vacíos con espacios exteriores recortados; PATCH requiere name y rechaza campos ajenos. Grupo con participantes devuelve 409 hasta retirar explícitamente sus participantes. Pertenencia incorrecta devuelve 404. No se modificaron modelos ni migraciones.
+- Verificación: `python -m pytest -p no:cacheprovider` desde server: 40 pruebas aprobadas con PostgreSQL local real, incluyendo FK y persistencia confirmada desde otra conexión. Se creó una base aleatoria exclusiva splitly_test_<UUID>, se aplicó allí la migración existente y se retiró al finalizar; sin modificar datos de splitly_dev. Los tests HTTP se aíslan mediante transacciones/savepoints. No se usó SQLite ni persistencia en memoria.
+- Correcciones: README referenciaba server/.env.example, ausente en el árbol actual; se corrigió para usar las variables del ejemplo versionado en la raíz sin sobrescribir .env. No se imprimieron credenciales.
+- Límites: sin gastos, cálculos, autenticación, paginación ni cambios frontend. No hubo conexión a Supabase ni push a GitHub. Entorno verificado: Python 3.14.5; no se probó Python 3.11 por separado.
