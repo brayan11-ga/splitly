@@ -7,7 +7,7 @@ import ActionDialog from './ActionDialog'
 import ResourceState from './ResourceState'
 
 const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es')
-export default function GroupsPanel({ preview = false }) {
+export default function GroupsPanel({ preview = false, onChanged }) {
   const resource = useRemoteResource(groupsService.list)
   const [query, setQuery] = useState('')
   const [action, setAction] = useState(null)
@@ -26,6 +26,7 @@ export default function GroupsPanel({ preview = false }) {
       await groupsService.remove(action.record.id)
       resource.setData(previous => previous.filter(item => item.id !== action.record.id)); setNotice('Grupo eliminado.')
     }
+    onChanged?.()
   }
   return <section className="groups-panel" aria-labelledby="groups-heading"><div className="groups-toolbar"><div><h2 id="groups-heading">{preview ? 'Mis grupos' : 'Todos mis grupos'}{resource.status === 'success' && <span className="group-count">{groups.length}</span>}</h2>{!preview && <label className="group-search"><span className="eyebrow">Buscar por nombre</span><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Tu próximo viaje, la casa…" /></label>}</div><div className="toolbar-actions">{resource.status === 'success' && <button className="workspace-text-button" onClick={() => { setNotice(''); resource.reload() }}>Actualizar</button>}<button className="action action-primary" disabled={resource.status !== 'success'} onClick={() => { setNotice(''); setAction({ kind: 'create' }) }}>Crear grupo <span aria-hidden="true">＋</span></button></div></div>
     {notice && <p role="status" className="workspace-success">{notice}</p>}<ResourceState {...resource} onRetry={resource.reload}>

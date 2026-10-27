@@ -71,3 +71,11 @@ Verificados seis flujos: rutas protegidas/landing, registro/cookie/recarga/logou
 Configuración completa en README de la raíz, sección «Despliegue: Cloudflare Pages → Render → Supabase». En Pages: raíz client, build npm run build, salida dist, VITE_API_URL vacío y API_ORIGIN=https://TU-API.onrender.com como binding de Functions. functions/ permanece fuera de dist. public/_routes.json se copia durante build; /api no cae al fallback React.
 
 `npm run test:proxy` ejecuta las pruebas Node de transporte del handler con upstream controlado. `npm test` mantiene los flujos locales con FastAPI/PostgreSQL; no prueba los dominios de producción. Ver README raíz para comandos de Wrangler sin despliegue y revisión de cookies/CSRF en HTTPS real.
+
+## Gastos y balances
+
+En el detalle de grupo, `GroupFinances` consulta gastos y balances reales; `ExpenseDialog` permite alta, edición, selección de participantes, vista previa y borrado confirmado. `services/expenses.js` reutiliza apiRequest (cookies y CSRF). `utils/money.js` valida pesos enteros seguros y usa BigInt para el reparto; no usa centavos ni guarda importes en localStorage.
+
+Dashboard añade `DashboardMetrics` con sumas reales de los grupos propios; no lo presenta como saldo personal. Se actualiza al crear grupos, al volver a la ruta y mediante Actualizar métricas. El servidor debe tener aplicada manualmente la revisión 0003_expenses_cop; revisar README raíz para pasos locales/Supabase y despliegue ordenado.
+
+`tests/expenses.spec.js` añade tres recorridos reales (CRUD/persistencia/balances, remanente/métricas y errores del servidor). `proxy-tests/money.test.js` verifica vista previa/parseo, también incluido en npm run test:proxy junto con las regresiones del proxy. Revisar manualmente lector de pantalla, zoom al 200 %, 320 px, grupos grandes y sesión real en HTTPS de producción; no hay pagos ni liquidaciones registradas.

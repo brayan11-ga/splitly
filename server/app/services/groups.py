@@ -7,9 +7,9 @@ from app.models import Group
 from app.services.errors import ConflictError, NotFoundError, commit
 
 
-def get_group(session: Session, group_id: UUID, owner_id: UUID) -> Group:
+def get_group(session: Session, group_id: UUID, owner_id: UUID, lock: bool = False) -> Group:
     """Punto de autorización reutilizable también para futuros gastos."""
-    group = repositories.find_group(session, group_id, owner_id)
+    group = repositories.find_group(session, group_id, owner_id, lock=lock)
     if group is None:
         raise NotFoundError("Grupo no encontrado.")
     return group

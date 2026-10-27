@@ -88,3 +88,53 @@
 @media (hover: hover) and (pointer: fine) { .group-card:hover { border-color: #c0c1ff; box-shadow: 0 5px 0 #0c0f0c; } .group-card h3 a:hover,.workspace-text-button:hover { text-decoration: underline; text-underline-offset: 4px; } .group-enter:hover { background: #bff52a; color: #101310; } }
 @media (max-width: 1000px) { .groups-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .group-detail-grid { grid-template-columns: 1fr; } }
 @media (max-width: 680px) { .workspace-navigation { margin-bottom: 30px; gap: 12px; } .workspace-nav a { padding: 10px; } .workspace-heading { margin-bottom: 30px; } .groups-toolbar,.detail-heading { align-items: flex-start; flex-direction: column; } .groups-toolbar>div,.group-search input { width: 100%; } .groups-grid { grid-template-columns: 1fr; } .members-panel,.workspace-empty,.resource-state { padding: 22px; } .members-list li { flex-wrap: wrap; } .member-actions { margin-left: 58px; } .detail-actions { flex-direction: row; align-items: center; flex-wrap: wrap; } .workspace-dialog-content { padding: 24px; } .dialog-actions .action { flex: 1; padding-inline: 14px; } }
+
+/* Expenses: the existing editorial palette, integer COP, no payment controls. */
+.group-finances { margin-top: 48px; padding-top: 32px; border-top: 1px solid #434934; }
+.finance-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-block: 24px 32px; }
+.finance-metrics article { background: #181c18; border: 1px solid #33382e; padding: 24px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.finance-metrics strong { font: 700 clamp(22px, 2.5vw, 36px)/1.15 var(--font-display); letter-spacing: -.04em; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.finance-metrics .finance-metric-light { background: #f2f2e9; color: #101310; border-bottom: 3px solid #bff52a; }
+.finance-metrics article>span:last-child:not(:first-child) { font-size: 12px; }
+.finances-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(260px, 5fr); gap: 24px; align-items: start; }
+.expense-list { display: grid; gap: 16px; }
+.expense-card { padding: 24px; background: #181c18; border-left: 3px solid #bff52a; }
+.expense-card-title { display: flex; justify-content: space-between; align-items: start; gap: 20px; }
+.expense-card-title h3 { font-size: 23px; line-height: 1.25; overflow-wrap: anywhere; }
+.expense-card-title>strong { font: 700 22px/1.25 var(--font-display); color: #bff52a; font-variant-numeric: tabular-nums; }
+.expense-card-title p { font-size: 13px; color: #c4c9ae; margin-top: 12px; }
+.expense-card details { margin-top: 20px; border-top: 1px solid #434934; padding-top: 16px; }
+.expense-card summary { cursor: pointer; font-size: 13px; color: #c0c1ff; }
+.expense-card details li,.expense-preview li { display: flex; justify-content: space-between; gap: 16px; padding-block: 8px; font-size: 13px; overflow-wrap: anywhere; }
+.expense-card-actions { display: flex; justify-content: flex-end; gap: 24px; margin-top: 12px; }
+.transfers-panel { background: #1e2036; border-top: 2px solid #c0c1ff; padding: 26px; }
+.transfers-panel h2 { font-size: 24px; line-height: 1.2; margin-block: 12px 16px; }
+.transfers-panel>p:not(.eyebrow) { font-size: 14px; color: #c4c9ae; line-height: 1.6; }
+.transfers-panel li { padding: 18px 0; border-bottom: 1px solid #434934; font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
+.transfers-panel strong { color: #bff52a; }
+.transfers-empty { margin-top: 24px; }
+.balances-section { margin-top: 36px; padding: 26px; background: #181c18; }
+.balance-table-scroll { overflow-x: auto; }
+.balance-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.balance-table caption { text-align: left; color: #c4c9ae; padding-bottom: 18px; font-size: 12px; }
+.balance-table th,.balance-table td { text-align: right; padding: 18px 12px; border-top: 1px solid #434934; white-space: nowrap; }
+.balance-table th:first-child { text-align: left; white-space: normal; min-width: 140px; overflow-wrap: anywhere; }
+.balance-table thead { color: #c4c9ae; font-size: 12px; }
+.balance-direction { display: block; font-size: 10px; margin-top: 6px; }
+.expense-dialog { width: min(680px, calc(100% - 32px)); max-width: 680px; }
+.expense-fields { padding: 0; margin: 0; border: 0; min-width: 0; }
+.expense-field-row { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 20px; margin-top: 20px; }
+.workspace-field select { width: 100%; border: 1px solid #434934; background: #101310; color: #f2f2e9; min-height: 48px; border-radius: 3px; padding: 12px; font-size: 16px; }
+.expense-participants { padding: 18px; border: 1px solid #434934; margin-top: 20px; }
+.expense-participants legend { padding-inline: 6px; font-weight: 600; }
+.participant-checkboxes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.participant-checkboxes label { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 14px; background: #282b27; font-size: 14px; cursor: pointer; overflow-wrap: anywhere; }
+.participant-checkboxes input { accent-color: #bff52a; width: 18px; height: 18px; }
+.expense-preview { background: #101310; padding: 20px; margin-block: 24px; }
+.expense-preview h3 { font-size: 18px; }
+.expense-preview p { font-size: 13px; color: #c4c9ae; margin-top: 10px; }
+.expense-preview strong { color: #bff52a; }
+.dashboard-metrics { margin-bottom: 40px; }
+.workspace-page summary:focus-visible,.balance-table-scroll:focus-visible,.workspace-dialog select:focus-visible { outline: 2px solid #c0c1ff; outline-offset: 3px; }
+@media (max-width: 1023px) { .finances-grid { grid-template-columns: 1fr; } .finance-metrics { gap: 12px; } .finance-metrics article { padding: 18px; } }
+@media (max-width: 767px) { .finance-metrics { grid-template-columns: 1fr; } .finance-metrics strong { font-size: 30px; } .expense-card,.transfers-panel,.balances-section { padding: 20px; } .expense-card-title { flex-direction: column; gap: 16px; } .expense-field-row { grid-template-columns: 1fr; gap: 0; } .group-finances>.members-heading { align-items: start; } .group-finances .toolbar-actions { flex-direction: column; align-items: start; gap: 12px; } }

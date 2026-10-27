@@ -8,7 +8,8 @@ from app.config import Settings, get_settings
 from app.routers.health import router as health_router
 from app.routers.groups import router as groups_router
 from app.routers.members import router as members_router
-from app.services.errors import ConflictError, NotFoundError
+from app.routers.expenses import router as expenses_router
+from app.services.errors import ConflictError, InputError, NotFoundError
 from app.routers.auth import router as auth_router
 from app.services.auth import AuthenticationError
 
@@ -27,6 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(health_router, prefix="/api")
     application.include_router(groups_router, prefix="/api")
     application.include_router(members_router, prefix="/api")
+    application.include_router(expenses_router, prefix="/api")
     application.include_router(auth_router, prefix="/api")
 
     @application.middleware("http")
@@ -54,6 +56,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @application.exception_handler(ConflictError)
     async def conflict_handler(request, exc):
         return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+    @application.exception_handler(InputError)
+    async def input_error_handler(request, exc):
+        return JSONResponse(status_code=422, content={"detail": str(exc)})
 
     @application.exception_handler(SQLAlchemyError)
     async def database_error_handler(request, exc):

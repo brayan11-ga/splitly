@@ -4,5 +4,6 @@ from app.models.group import Group
 from app.models.member import Member
 from app.models.user import User
 from app.models.auth_session import AuthSession
+from app.models.expense import Expense, ExpenseShare
 
-__all__ = ["Group", "Member", "User", "AuthSession"]
+__all__ = ["Group", "Member", "User", "AuthSession", "Expense", "ExpenseShare"]

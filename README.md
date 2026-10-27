@@ -1,6 +1,6 @@
 # Splitly — Gastos compartidos
 
-Prototipo web para crear grupos, registrar gastos y calcular deudas simplificadas. **Estado: autenticación React/FastAPI con sesiones PostgreSQL y CRUD privado de grupos y participantes**. Gastos y balances siguen pendientes.
+Prototipo web para crear grupos, registrar gastos y calcular deudas simplificadas. **Estado: autenticación React/FastAPI con sesiones PostgreSQL, CRUD privado de grupos/participantes/gastos y balances automáticos en COP**. El módulo de gastos requiere aplicar la migración 0003 antes de publicar esta versión.
 
 ## Stack
 - Cliente: React, Vite, Tailwind CSS, React Router, Motion, React Bits; Recharts para gráficas; Three.js + React Three Fiber solo de manera progresiva.
@@ -111,13 +111,13 @@ La revisión `0002_auth_ownership` crea users y auth_sessions y añade owner_id 
 |---|---|
 | `/dashboard` | Tres grupos propios más recientes, creación y acceso a lista/detalle |
 | `/groups` | Todos los grupos, búsqueda por nombre, crear/editar/eliminar con confirmación |
-| `/groups/:groupId` | Nombre/fecha reales, editar/eliminar grupo y CRUD de participantes |
+| `/groups/:groupId` | Grupo/participantes, CRUD de gastos, repartos y balances reales |
 
 Crear un grupo, abrir su tarjeta y añadir participantes. Cancelar/Escape no envía escrituras. Los borrados requieren confirmación; un grupo con participantes devuelve 409 y ofrece un enlace al detalle para retirarlos primero. Cada pantalla se actualiza tras el éxito REST y consulta de nuevo al entrar. Actualizar recoge cambios de otra pestaña; no hay sincronización en tiempo real. La búsqueda local ignora acentos y mayúsculas.
 
-Componentes compartidos en `client/src/components/workspace/`, acceso REST en `services/groups.js`, cargas cancelables en `hooks/useRemoteResource.js`, fechas en `utils/format.js` y estilos `workspace.css`. Se reutilizan cookies/CSRF y cliente HTTP, sin nuevos endpoints, dependencias o migraciones. No se inventan categorías, fotos, saldos ni totales. Gastos y balances siguen pendientes.
+Componentes compartidos en `client/src/components/workspace/`, acceso REST en `services/groups.js`, cargas cancelables en `hooks/useRemoteResource.js`, fechas en `utils/format.js` y estilos `workspace.css`. Se reutilizan cookies/CSRF y cliente HTTP. El módulo de gastos añade endpoints y migración 0003, sin nuevas dependencias. No se inventan categorías, fotos, saldos ni totales; dashboard y detalle muestran importes persistidos.
 
-`npm test` incluye seis recorridos nuevos de CRUD, navegación, búsqueda, recarga, cancelación, 409 real, grupos ajenos, errores CSRF/validación y sesión revocada, además de los seis de autenticación. Se ejecutan con PostgreSQL temporal real sin eliminar datos de splitly_dev. Revisión manual pendiente: lector de pantalla, zoom 200 %, 320 px, otros navegadores y visitas directas en el dominio HTTPS. Configurar fallback SPA sin reescribir `/api` ni assets a index.html.
+`npm test` incluye 15 recorridos: seis de autenticación, seis de grupos/participantes y tres de gastos/balances, con navegación, recarga, cancelación, 409 real, grupos ajenos, errores CSRF/validación y sesión revocada. Se ejecutan con PostgreSQL temporal real sin eliminar datos de splitly_dev. Revisión manual pendiente: lector de pantalla, zoom 200 %, 320 px, otros navegadores y visitas directas en el dominio HTTPS. Configurar fallback SPA sin reescribir `/api` ni assets a index.html.
 
 Con la migración aplicada manualmente, iniciar API en 8000 y `npm run dev` desde client. Abrir `http://localhost:5173/register`, registrar nombre/correo ficticios y una frase de 15–128 caracteres. Debe llevar a `/dashboard`; recargar mantiene la sesión por `/api/auth/me`. Cerrar sesión lleva a login e invalida la cookie en el servidor; una visita directa a dashboard vuelve a login. Iniciar sesión con el mismo correo recupera únicamente los grupos propios. Ver [docs/API.md](docs/API.md) para Swagger y CSRF.
 
@@ -208,3 +208,41 @@ En el **dominio HTTPS real**, después de un despliegue manual:
 7. Confirmar que respuestas autenticadas no llegan desde caché y no hay redirecciones del navegador hacia Render. Repetir en al menos dos navegadores y con bloqueo de cookies de terceros.
 
 Siguen pendientes las medidas de apertura pública ya documentadas (incluido límite de intentos), la conexión real a Supabase y este recorrido HTTPS en los dominios finales. No se afirma que producción esté validada solo por compilar.
+
+## Gastos compartidos: operación y migración 0003
+
+En `/groups/:groupId`, añadir miembros y pulsar **Añadir gasto**: descripción, importe sin puntos/decimales (ej. `90000`), pagador y participantes del consumo. La vista previa y el servidor asignan pesos enteros por igual; si sobra dinero, el remanente se distribuye por UUID ascendente. Se permite que el pagador no consuma y que alguna parte sea 0 cuando haya más participantes que pesos.
+
+Los balances muestran pagado, parte correspondiente y neto por miembro. Las transferencias sugeridas son deterministas, no garantizan mínimo global ni ejecutan pagos. Crear/editar/eliminar recarga gastos y balances desde PostgreSQL. Dashboard muestra número de grupos/gastos y suma real compartida entre grupos, no un saldo personal (el propietario no se identifica automáticamente con un Member). Usar **Actualizar métricas** para recoger cambios de otra pestaña. No se almacenan importes ni tokens en localStorage.
+
+**Unidad canónica:** pesos COP enteros en `amount` y `amount_owed`; se sustituye la propuesta anterior de centavos de la documentación/AGENTS. No había tablas de gastos previas implementadas que convertir. No enviar amount_cents ni dividir/multiplicar por 100. Máximo por gasto y total del grupo vía API: `9007199254740991` COP; evita pérdida de precisión JSON/JavaScript. La vista previa usa BigInt internamente y el backend enteros/BIGINT. Ver contrato en docs/API.md.
+
+Nueva migración exacta: `server/alembic/versions/0003_expenses_cop.py`, revisión `0003_expenses_cop`, padre `0002_auth_ownership`.
+
+Añade expenses/expense_shares, índices, checks, FKs compuestas y triggers diferidos de integridad del reparto. Añade a members una clave UNIQUE(id, group_id) para las referencias compuestas. No modifica ni borra filas existentes; tomar en cuenta el bloqueo breve sobre members al añadir esa restricción. El downgrade está bloqueado. Eliminar un gasto desde la API elimina solo sus partes; un Member asociado como pagador o beneficiario no se puede borrar (409) hasta editar/eliminar sus gastos.
+
+### Aplicación local (manual)
+
+Desde server, con `.venv` activo y DATABASE_URL local revisada:
+
+```powershell
+python -m alembic current
+python -m alembic heads
+python -m alembic upgrade 0002_auth_ownership:0003_expenses_cop --sql
+# Revisar SQL: solo adiciones; confirmar respaldo y destino local.
+python -m alembic upgrade 0003_expenses_cop
+python -m alembic current
+python -m alembic check
+```
+
+El comando offline de arriba genera solo el tramo nuevo y presupone una base en 0002. Si la base local está antes de 0002, revisar también las migraciones anteriores y aplicar la cadena completa, nunca saltar con stamp. Esta tarea aplica migraciones únicamente dentro de bases temporales de pruebas; no actualiza splitly_dev automáticamente.
+
+### Aplicación posterior en Supabase (manual, no ejecutada)
+
+1. Verificar respaldo y restauración, servicio/proyecto de destino y revisión actual. Mantener DATABASE_URL con TLS solo como secreto del backend; usar conexión directa o pool de sesión apto para migraciones, no el pool de transacciones.
+2. Desde el entorno autorizado con el código nuevo y esa conexión secreta, ejecutar `python -m alembic current`. Debe estar en 0002; si no, detenerse y revisar la cadena. Generar/revisar `python -m alembic upgrade 0002_auth_ownership:0003_expenses_cop --sql`. El rol debe poder crear tablas, claves, función PL/pgSQL y constraint triggers.
+3. En una ventana de cambio controlada, ejecutar `python -m alembic upgrade 0003_expenses_cop`; después `python -m alembic current` y `python -m alembic check`. No usar downgrade ni borrar tablas ante un fallo; revisar la transacción y restauración prevista.
+4. Publicar después el backend compatible y el frontend. No publicar el cliente nuevo antes de disponer de tablas y endpoints: mostraría errores de carga. Se mantienen VITE_API_URL vacío, API_ORIGIN y cookies/CSRF/orígenes existentes.
+5. Con datos ficticios, comprobar desde Pages HTTPS registro/login, crear grupo y miembros, gasto de 90000 entre tres, gasto de 101, editar/eliminar, recarga, 409 de participante asociado, CSRF y logout/revocación. Verificar que el proxy sigue devolviendo JSON y no HTML para /api.
+
+**Pendiente de producción:** aplicar esta migración y desplegar manualmente, validar permisos PL/pgSQL/triggers y probar los dominios HTTPS reales. No se contactó Supabase/Render ni se modificaron secretos desde esta tarea. El producto no registra pagos efectuados, por lo que las transferencias expresan deudas según los gastos, no confirmaciones bancarias.

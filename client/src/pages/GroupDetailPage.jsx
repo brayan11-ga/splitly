@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import WorkspaceNav from '../components/workspace/WorkspaceNav'
+import GroupFinances from '../components/workspace/GroupFinances'
 import ActionDialog from '../components/workspace/ActionDialog'
 import ResourceState from '../components/workspace/ResourceState'
 import { createdDate } from '../utils/format'
@@ -41,7 +42,7 @@ function GroupDetail({ groupId }) {
       <div className="detail-meta"><span className="eyebrow">{members.length} {members.length === 1 ? 'participante' : 'participantes'}</span><span className="eyebrow">Moneda del proyecto / COP</span><button className="workspace-text-button" onClick={() => { setNotice(''); resource.reload() }}>Actualizar</button></div>{notice && <p role="status" className="workspace-success">{notice}</p>}
       <div className="group-detail-grid"><section className="members-panel" aria-labelledby="members-heading"><div className="members-heading"><h2 id="members-heading">Participantes</h2><button className="action action-primary" onClick={() => open('create', 'member')}>Añadir participante <span aria-hidden="true">＋</span></button></div>
         {members.length ? <ul className="members-list">{members.map((member, index) => <li key={member.id}><span className={`member-avatar member-avatar-${index % 3}`} aria-hidden="true">{Array.from(member.name)[0]?.toLocaleUpperCase('es')}</span><div className="member-name"><h3>{member.name}</h3><p>En este grupo desde {createdDate(member.created_at)}</p></div><div className="member-actions"><button className="workspace-text-button" aria-label={`Editar participante ${member.name}`} onClick={() => open('edit', 'member', member)}>Editar</button><button className="workspace-text-button danger-text" aria-label={`Eliminar participante ${member.name}`} onClick={() => open('delete', 'member', member)}>Eliminar</button></div></li>)}</ul> : <div className="workspace-empty"><h3>Todo plan empieza por su gente.</h3><p>Aún no hay participantes. Añade a la primera persona para organizar el grupo.</p></div>}
-      </section><aside className="group-plan-note"><span className="eyebrow text-lavender">El siguiente paso</span><h2>Primero el grupo.<br /><span className="text-lime">Luego las cuentas.</span></h2><p>Ya puedes gestionar a las personas de este plan. El registro de gastos y los balances todavía no están disponibles.</p><span aria-hidden="true">↗</span></aside></div></>}
+      </section><aside className="group-plan-note"><span className="eyebrow text-lavender">Cuentas claras</span><h2>Comparte el plan.<br /><span className="text-lime">Reparte los gastos.</span></h2><p>Registra quién pagó y quiénes participaron. Las cuentas se reparten en pesos enteros. Para retirar a alguien asociado a gastos, edita o elimina primero esos gastos.</p><a className="workspace-text-button" href="#expenses-heading">Ver gastos y balances ↓</a></aside></div><GroupFinances key={members.map(member => member.id + member.name).join("|")} groupId={groupId} members={members} /></>}
     </ResourceState>{action && <ActionDialog key={`${action.entity}-${action.kind}-${action.record?.id || 'new'}`} action={action} entity={action.entity} onSubmit={submit} onClose={() => setAction(null)} />}</main>
 }
 export default function GroupDetailPage() {

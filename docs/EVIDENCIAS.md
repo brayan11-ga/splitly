@@ -29,3 +29,10 @@
 - Lint/build aprobados; Wrangler 4.153.0 compila las Functions sin desplegar.
 - Runtime Pages local: seis rutas SPA HTML 200 y cuatro API JSON 500/no-store con binding intencionalmente inválido; no se contacta Render. Script reproducible en client/proxy-tests/pages-smoke.js.
 - Pendiente: probar HTTPS de Pages → Render → Supabase con dominios/configuración propios, aceptación de cookie __Host-, CSRF, recarga y logout/revocación. No se afirma éxito de cookies en producción.
+
+## 2026-10-27 — Gastos compartidos
+- Migración 0003 aplicada solo a PostgreSQL temporal de pruebas; SQL aditivo revisado offline. No se modifica producción ni splitly_dev.
+- Backend: 87 pruebas aprobadas, pip check sin conflictos; Node: 14 pruebas aprobadas incluyendo dinero y regresión proxy.
+- Capturas de implementación generadas en client/test-results/expenses-desktop.png, expenses-mobile.png y expenses-form.png, ignoradas por Git; se usan únicamente datos ficticios persistidos en tests.
+- Pendiente publicar manualmente migración/backend/frontend y probar flujo completo en dominios HTTPS reales. No son evidencias de pagos ni de aceptación en producción.
+- Frontend: lint/build finales aprobados y 15/15 pruebas de navegador; tres recorridos de gastos repetidos tras el ajuste visual del formulario. Capturas desktop 1440 px, móvil 390 px y formulario inspeccionadas; tabla de balances usa desplazamiento interno en móvil.

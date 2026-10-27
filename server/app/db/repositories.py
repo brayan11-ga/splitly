@@ -7,8 +7,11 @@ from sqlmodel import Session, select
 from app.models import Group, Member
 
 
-def find_group(session: Session, group_id: UUID, owner_id: UUID) -> Group | None:
-    return session.exec(select(Group).where(Group.id == group_id, Group.owner_id == owner_id)).first()
+def find_group(session: Session, group_id: UUID, owner_id: UUID, lock: bool = False) -> Group | None:
+    statement = select(Group).where(Group.id == group_id, Group.owner_id == owner_id)
+    if lock:
+        statement = statement.with_for_update()
+    return session.exec(statement).first()
 
 
 def list_groups(session: Session, owner_id: UUID) -> list[Group]:

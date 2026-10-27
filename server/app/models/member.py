@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, DateTime, func
+from sqlalchemy import Column, DateTime, UniqueConstraint, func
 from sqlmodel import Field, SQLModel
 
 
 class Member(SQLModel, table=True):
     __tablename__ = "members"
+    __table_args__ = (UniqueConstraint("id", "group_id", name="uq_members_id_group"),)
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     group_id: UUID = Field(foreign_key="groups.id", index=True, nullable=False)

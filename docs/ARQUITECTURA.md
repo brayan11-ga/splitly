@@ -12,20 +12,20 @@
 - `server/tests/`: pruebas pytest (incluida lógica de dinero).
 
 ## Modelo de datos
-El backend implementa `main.py`, configuración en `config.py`, salud y CRUD de grupos/participantes. `routers/` traduce HTTP, `schemas/` valida y serializa, `services/` aplica reglas y confirma transacciones, y `db/repositories.py` concentra consultas SQLModel sobre `Group`/`Member`. La conexión en `db/session.py` es diferida y el endpoint de salud funciona sin `DATABASE_URL`. Cálculos y gastos siguen pendientes.
+El backend implementa `main.py`, configuración en `config.py`, salud y CRUD de grupos/participantes. `routers/` traduce HTTP, `schemas/` valida y serializa, `services/` aplica reglas y confirma transacciones, y `db/repositories.py` concentra consultas SQLModel sobre `Group`/`Member`. La conexión en `db/session.py` es diferida y el endpoint de salud funciona sin `DATABASE_URL`. Gastos, repartos y balances se implementan en capas propias; ver módulo financiero más abajo.
 
 - `groups`: id UUID, name, created_at.
 - `users`: id UUID, full_name, email normalizado UNIQUE y CHECK, hashed_password Argon2id, created_at con zona horaria.
 - `auth_sessions`: token_hash SHA-256 PK, user_id FK/indexado, expires_at con zona horaria/indexado, created_at. No almacena el token en claro.
 - `groups.owner_id`: FK/index a users, nullable únicamente para conservar datos anteriores sin propietario; el servidor siempre asigna propietario al crear desde la API.
 - `members`: id UUID, group_id FK, name, created_at.
-- `expenses`: id UUID, group_id FK, paid_by_member_id FK, description, amount_cents BIGINT, created_at.
-- `expense_shares`: id UUID, expense_id FK, member_id FK, amount_cents BIGINT.
+- `expenses`: id UUID, group_id FK, paid_by (FK compuesta a Member/grupo), description, amount BIGINT en pesos COP, created_at TIMESTAMPTZ.
+- `expense_shares`: PK (expense_id, member_id), group_id, amount_owed BIGINT en COP; FKs compuestas a Expense/grupo y Member/grupo.
 - Índices en claves foráneas y pertenencia; validar que todos sean del mismo grupo.
 
 ## Matemática
 Saldo(miembro) = total pagado - total de participaciones asignadas. Positivo: recibe; negativo: paga.
-Reparto igualitario de enteros: `q, r = divmod(amount_cents, n)`; cada uno recibe q; los primeros r miembros según orden determinista reciben +1 centavo. La suma de participaciones debe coincidir exactamente con el gasto.
+Reparto igualitario de enteros: `q, r = divmod(amount, n)`; cada uno recibe q; los primeros r miembros según orden determinista reciben +1 peso. La suma de participaciones debe coincidir exactamente con el gasto.
 Liquidación: emparejar saldo negativo y positivo, generar transferencias de mínimo monto, actualizar saldos hasta cero. Asegurar suma total de saldos = 0.
 
 ## Diseño y UX
@@ -39,7 +39,7 @@ Supabase PostgreSQL (credenciales solamente en backend), FastAPI en Render y cli
 - `server/.env` solo para desarrollo; las variables del proceso prevalecen. En producción se inyectan secretos en el backend. TLS en la conexión de producción y CORS explícito del cliente desplegado.
 - `get_session` es una dependencia generadora reutilizable mediante `Depends(get_session)`: abre una sesión por petición y la cierra al finalizar. Las operaciones de negocio deberán decidir `commit`/`rollback`; no hay commit automático. Motor con `pool_pre_ping`, timeout de conexión de 5 segundos y parámetros SQL ocultos.
 - Alembic lee la misma configuración, importa `app.models` y usa `SQLModel.metadata`. No se ejecuta `create_all` ni migraciones al iniciar FastAPI. `alembic.ini` no contiene URL ni credenciales.
-- Revisión `0001_groups_members`: UUID generados en Python, nombres no nulos y fechas UTC con `TIMESTAMP WITH TIME ZONE` y valor por defecto SQL. FK `members.group_id -> groups.id` sin borrado en cascada e índice `ix_members_group_id`. Tablas de gastos pendientes.
+- Revisión `0001_groups_members`: UUID generados en Python, nombres no nulos y fechas UTC con `TIMESTAMP WITH TIME ZONE` y valor por defecto SQL. FK `members.group_id -> groups.id` sin borrado en cascada e índice `ix_members_group_id`. La revisión 0003 añade tablas de gastos sin eliminar datos existentes.
 - La autogeneración omite propuestas de borrado de tablas reflejadas ajenas al metadata. Esto no sustituye revisar cada migración: no elimina columnas ni tablas automáticamente de forma segura. El downgrade inicial está bloqueado expresamente.
 - `python -m app.db.check` comprueba solo PostgreSQL local `splitly_dev` con `SELECT 1`, sin mostrar URL ni mensajes del driver. Ver instrucciones de aplicación local y futura aplicación en Supabase en README.
 
@@ -49,9 +49,9 @@ Supabase PostgreSQL (credenciales solamente en backend), FastAPI en Render y cli
 
 - `pages/GroupsPage.jsx` muestra la lista y `GroupDetailPage.jsx` carga grupo/miembros en paralelo, con clave React por groupId para aislar cada ruta. Las tres páginas privadas comparten WorkspaceNav y logout; todas usan ProtectedRoute.
 - `components/workspace/GroupsPanel` comparte lista completa y vista previa del dashboard (tres grupos recientes); GroupCard muestra nombre y fecha reales. ResourceState gestiona loading/error/reintento/404. ActionDialog comparte formulario/confirmación HTML nativa con foco modal, Escape, restauración de foco, estados de envío/error y entrada Motion breve. Reduced motion elimina las entradas; estilos acotados a workspace.css.
-- `services/groups.js` adapta solo los nueve endpoints documentados y envía exclusivamente name en POST/PATCH. Usa apiRequest, cookies y CSRF; no admite owner_id. `utils/format.js` formatea fechas. No se modifican modelos, backend ni migraciones.
+- `services/groups.js` adapta solo los nueve endpoints documentados y envía exclusivamente name en POST/PATCH. Usa apiRequest, cookies y CSRF; no admite owner_id. `utils/format.js` formatea fechas. La gestión de grupos sigue reutilizando su contrato; el módulo financiero añade modelos/API y migración propios.
 - `useRemoteResource` cancela lecturas al desmontar e ignora resultados abortados. Cada página consulta de nuevo al entrar; las escrituras actualizan estado transitorio solo después del éxito REST. Eliminar espera 204 antes de retirar registros. Actualizar recarga cambios externos. No hay persistencia local ni caché compartida entre usuarios.
-- Búsqueda local por nombre sin acentos/mayúsculas. 409 al eliminar grupo conserva datos y enlaza a gestionar participantes. 401 redirige al login con explicación; 403 conserva formulario y pide recargar; 404 no muestra gestión; 422 distingue nombre inválido de UUID inválido. Gastos y balances se señalan como pendientes.
+- Búsqueda local por nombre sin acentos/mayúsculas. 409 al eliminar grupo conserva datos y enlaza a gestionar participantes. 401 redirige al login con explicación; 403 conserva formulario y pide recargar; 404 no muestra gestión; 422 distingue nombre inválido de UUID inválido. GroupFinances y ExpenseDialog gestionan gastos y balances reales dentro del detalle.
 - Playwright recorre CRUD, navegación, autorización y persistencia contra API/PostgreSQL temporal reales. Para 403/422 se altera la petición de prueba y la respuesta procede del servidor real; solo el error de red se induce abortando peticiones. Capturas de escritorio y 390 px ignoradas por Git; no se toca splitly_dev.
 
 ### Sesiones y seguridad
@@ -62,8 +62,21 @@ La solicitud de autenticación reemplaza la decisión inicial de MVP anónimo. `
 
 CSRF combina validación estricta del Origin y cabecera personalizada antes del login/registro; después exige además un token HMAC derivado del identificador aleatorio de sesión, devuelto en JSON y comparado en tiempo constante. Nunca se acepta el CSRF como autenticación. CORS explícito con credenciales; me y demás respuestas API no-store. Los errores de validación eliminan input y los fallos SQL usan mensajes genéricos, sin logs de contraseñas, SQL ni cookies.
 
-React separa `services/api.js`, `services/auth.js`, `auth/AuthProvider` y `ProtectedRoute`, páginas de formularios y dashboard. El servicio usa credentials:include y CSRF en memoria; /me restaura usuario/CSRF tras recargar, y los 401 de operaciones privadas invalidan el estado React. Errores de red no se confunden con una sesión anónima en el arranque: muestran una opción de reintento. Dashboard, /groups y /groups/:groupId implementan la gestión visual completa de grupos/participantes. Gastos pendientes. Los componentes, estilos e interacciones existentes de la Landing se preservan.
+React separa `services/api.js`, `services/auth.js`, `auth/AuthProvider` y `ProtectedRoute`, páginas de formularios y dashboard. El servicio usa credentials:include y CSRF en memoria; /me restaura usuario/CSRF tras recargar, y los 401 de operaciones privadas invalidan el estado React. Errores de red no se confunden con una sesión anónima en el arranque: muestran una opción de reintento. Dashboard, /groups y /groups/:groupId implementan la gestión visual completa de grupos/participantes. Gastos/repartos/balances implementados en las capas descritas abajo. Los componentes, estilos e interacciones existentes de la Landing se preservan.
 
 La revisión aditiva `0002_auth_ownership` conserva los grupos y participantes de 0001 con owner_id NULL e inaccesibles desde la API; su asignación solo puede hacerse manualmente después de verificar titularidad. No se ejecutó ninguna migración ni actualización de datos en splitly_dev o producción. Los tests migran datos previos únicamente en una base local temporal exclusiva; Alembic check verifica equivalencia de esquema. Playwright usa otra API de pruebas y una base temporal real, con cierre cooperativo para retirarla en Windows.
 
 Producción requiere TLS, orígenes definitivos, configuración de cookies y dominio coherente, backups, limitación de intentos de autenticación y gestión operativa de sesiones expiradas. Preferir mismo sitio o proxy /api para evitar bloqueo de cookies de terceros. No se incorporan proveedores externos, MFA, recuperación de contraseña ni verificación de correo en esta iteración.
+
+## Módulo financiero en COP
+
+- `models/expense.py`: Expense y ExpenseShare; `members` añade UNIQUE(id, group_id). FKs compuestas garantizan que pagador y beneficiarios coincidan con el grupo del gasto. PK compuesta de shares impide duplicados. amount positivo, amount_owed no negativo y límites de enteros seguros.
+- `alembic/versions/0003_expenses_cop.py`: aditiva; triggers DEFERRABLE INITIALLY DEFERRED en expenses y expense_shares verifican al COMMIT que existe al menos una parte y que suman exactamente el gasto. Permiten reemplazar todas las partes en una transacción. No hay cascada al borrar miembros; al borrar deliberadamente un gasto se eliminan sus partes. La migración nunca se aplica automáticamente en Supabase.
+- `schemas/expenses.py`: DTOs estrictos de creación/patch parcial/lectura y balances. Campos extra y null rechazados; descripción recortada; 1–1000 participantes únicos; entero COP estricto. Se abandona la propuesta amount_cents por solicitud explícita de pesos completos.
+- `db/expense_repository.py`: consultas/agrupación; `services/expenses.py`: propietario primero, validación de miembros, transacción única con rollback, bloqueo de fila de grupo para serializar sus escrituras y lecturas de snapshot, control del total seguro. Lecturas no autorizadas no revelan gastos ajenos. PATCH mezcla únicamente campos permitidos con el estado actual y recalcula el reparto completo.
+- `services/money.py`: funciones puras de reparto con divmod por UUID y emparejamiento de saldos. `services/balances.py`: datos reales de miembros/pagadores/repartos, total pagado, asumido y neto; netos suman cero. Liquidación estable sin prometer mínimo global ni efectuar pagos. El pagador puede no ser un beneficiario. Orden UUID independiente del orden de la selección o del nombre.
+- `routers/expenses.py`: seis endpoints anidados en /groups/{group_id}; reutiliza SessionDep y CurrentUser, por tanto sesión/CSRF y autorización actuales. Todos los errores conservan el contrato genérico sin SQL ni credenciales.
+- React: `services/expenses.js` usa el HTTP existente; `utils/money.js` parsea enteros seguros y calcula vista previa con BigInt; `GroupFinances`, `ExpenseDialog` y `DashboardMetrics` separan presentación, formulario y métricas. Se recargan gastos/balances tras mutaciones; membresía/nombres actualizados reconstruyen la sección financiera. Métricas agregadas limitan concurrencia de consultas y usan BigInt para sumar varios grupos sin redondeo.
+- Estados loading/error/empty/success, confirmación de borrado, diálogo nativo con foco/Escape/restauración, labels, checkboxes y tabla con encabezados, leyenda y scroll horizontal con teclado. Motion discreto según reduced motion. No hay nuevas dependencias, almacenamiento financiero en navegador, cambios de proxy ni cambios de Landing.
+- Para cambios entre pestañas se usa Actualizar; no hay sincronización push ni detección de versiones. Escrituras concurrentes del mismo grupo se serializan en servidor; si dos personas editan el mismo gasto, prevalece la última escritura válida. Las sugerencias no registran una liquidación real.
+- Pruebas: unitarias de enteros/transferencias y vista previa, API con PostgreSQL temporal y restricciones reales, commit desde conexión independiente, rollback de gasto y partes ante error SQL; Playwright con creación/edición/borrado/recarga, balances, métricas y errores CSRF/validación. Las migraciones de tablas/triggers son necesarias: create_all no sustituye Alembic.

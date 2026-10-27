@@ -305,3 +305,56 @@ Necesito que implementes y verifiques un proxy del mismo origen en Cloudflare Pa
 - Verificación Cloudflare adicional: `npx --yes wrangler@4 pages functions build --outdir .pages-build` aprobada con Wrangler 4.153.0 («Compiled Worker successfully»), sin desplegar ni añadir dependencias al proyecto. Runtime local Pages en 127.0.0.1:8788 verificado con `node proxy-tests/pages-smoke.js`: seis rutas SPA HTML 200 y cuatro API JSON 500/no-store ante API_ORIGIN HTTP deliberadamente inválido. Ninguna llamada al upstream. Esto prueba routing real y manejo de configuración, no cookies de producción.
 - Runtime local usó compatibility_date 2026-10-23 por defecto; aviso revisado y fecha fijada explícitamente en comandos recomendados del README y configuración de Pages. Proceso Wrangler local detenido al finalizar. Archivo adicional creado: client/proxy-tests/pages-smoke.js.
 - Lint final sin advertencias; git diff --check sin errores de whitespace. Confirmado _routes.json en dist; sin diferencias en server/, client/src/, Vite o package-lock.json respecto al inicio de esta tarea.
+
+## 2026-10-27 — Gastos compartidos y balances end-to-end
+- Herramienta: Codex.
+- Objetivo: implementar gastos, reparto equitativo COP, balances, transferencias sugeridas, UI y migración sin tocar producción.
+- Extractos textuales del prompt real recibido (mensaje completo en la conversación):
+
+```text
+Implementar de extremo a extremo el módulo de gastos compartidos y cálculo automático de deudas, conservando todas las funcionalidades existentes.
+```
+
+```text
+Expense:
+- id UUID.
+- group_id UUID.
+- paid_by UUID, relacionado con Member.
+- description.
+- amount como entero positivo en pesos colombianos.
+- created_at con zona horaria.
+```
+
+```text
+La suma de todos los balances debe ser exactamente cero.
+
+Implementar liquidación de deudas mediante algoritmo determinista de emparejamiento de deudores y acreedores.
+
+No afirmar que la solución siempre minimiza globalmente la cantidad de transferencias.
+
+No realizar pagos reales.
+```
+
+```text
+- No ejecutar migraciones sobre Supabase.
+- No hacer git push automáticamente.
+- No modificar secretos ni credenciales.
+- No romper autenticación.
+- No modificar el proxy de Cloudflare salvo que sea imprescindible.
+- No implementar pagos bancarios.
+- No implementar nuevas funcionalidades ajenas al MVP.
+```
+
+- Inspección: AGENTS, README y docs (requisitos/API/arquitectura/decisiones/prompts/evidencias); modelos/servicios/repositorios/routers/auth y migraciones 0001–0002; HTTP, detalle/grupos/dashboard/diálogos y pruebas; DESIGN.md, HTML de Detalle Stitch y su captura.
+- Decisión explícita: pesos COP amount/amount_owed sustituyen la propuesta de centavos de AGENTS. Sin tablas previas de gastos para convertir. Límites de entero seguro y BigInt en vista previa/dashboard; remainder por UUID ordenado.
+- Archivos nuevos backend: app/models/expense.py, schemas/expenses.py, db/expense_repository.py, services/money.py, expenses.py y balances.py, routers/expenses.py; alembic/versions/0003_expenses_cop.py; tests/test_money.py y test_expenses.py.
+- Archivos backend modificados: models/member.py y __init__.py, db/repositories.py, services/groups.py, members.py y errors.py, main.py, tests/test_database.py. Reutiliza sesiones/CSRF existentes. La migración añade constraints/índices/tablas/triggers sin alterar filas previas; FKs y triggers diferidos aseguran pertenencia/suma/no duplicados. Borrado de miembro asociado devuelve 409.
+- Archivos frontend nuevos: services/expenses.js, utils/money.js, components/workspace/ExpenseDialog.jsx, GroupFinances.jsx y DashboardMetrics.jsx; tests/expenses.spec.js y proxy-tests/money.test.js. Modificados DashboardPage.jsx, GroupDetailPage.jsx, GroupsPanel.jsx, services/groups.js y workspace.css. Sin cambios de Landing, proxy, Vite, HTTP/auth ni dependencias.
+- Docs: README raíz y client, REQUISITOS, API, ARQUITECTURA, DECISIONES, PROMPTS y EVIDENCIAS. Se preservan modificaciones ajenas previas en AGENTS, .gitignore raíz, .env.example raíz eliminado y design/ sin rastrear.
+- Verificación backend final: `.venv/Scripts/python.exe -m pytest -p no:cacheprovider`, 87/87 con PostgreSQL temporal real. Incluye regresión auth/grupos, límites/participantes/propietario/CSRF, remainder, suma cero, transferencias deterministas, FKs/constraints/rollback de alta y edición, commit desde conexión independiente y retirada de cuotas al borrar gasto. `.venv/Scripts/python.exe -m pip check`: sin dependencias incompatibles. Alembic heads identifica 0003_expenses_cop; SQL 0002:0003 generado y revisado offline, sin DROP ni cambios de filas de negocio; alembic check de cada fixture temporal sin divergencias.
+- Pruebas intermedias detectaron fechas equivalentes con diferente zona en POST/GET; se normalizó ExpenseRead a UTC. Se corrigió una dependencia de hook innecesaria. Una sustitución de documentación separó incorrectamente texto por caracteres; se restauró el contrato previo de API desde el contenido versionado y se verificó que conserva grupos, Swagger y autenticación antes del contrato nuevo.
+- Node: npm run test:proxy, 14/14 (12 de regresión del proxy + 2 de parseo/vista previa financiera). Compilación y navegador requieren reintento autorizado por spawn EPERM del sandbox. No se cambian permisos ni secretos de la app para resolverlo.
+- Revisión visual: capturas de gastos escritorio 1440 px y móvil 390 px, tabla con scroll interno, formulario de gasto. Se evita incluir importes simulados en pantallas privadas; datos ficticios creados realmente en la base temporal de tests. Capturas ignoradas en test-results, sin traces de red.
+- Límites: sin aplicar migraciones a splitly_dev/Supabase ni conectar a Render, sin push/despliegue. Debe revisarse y aplicarse 0003 manualmente antes del backend/frontend nuevo. Pendientes permisos/triggers/HTTPS en Supabase/Render/Pages reales, otros navegadores, lector de pantalla y zoom. No hay pagos reales ni registro de liquidación; actualizaciones entre pestañas mediante botón y última edición válida prevalece.
+- Verificación frontend final: npm run lint sin advertencias; npm run build aprobado (472 módulos; JS 450,09 kB / 141,38 kB gzip, CSS 38,39 kB / 8,70 kB gzip). Suite completa npm test: 15/15 con cierre cooperativo de API temporal; tras alinear los campos del formulario se repiten los tres recorridos de gastos. Capturas finales inspeccionadas: escritorio/móvil/formulario; sin desbordamiento horizontal de documento a 390 px, tabla con desplazamiento interno. Avisos no bloqueantes de entorno NO_COLOR/FORCE_COLOR y Motion con reduced motion.
+- Se verificó por diff que Landing, proxy Cloudflare, Vite, HTTP/auth, dependencias y migraciones 0001/0002 no cambian. git diff --check sin errores de whitespace (avisos de conversión LF/CRLF de Git). No se corrigen ni revierten cambios ajenos iniciales.

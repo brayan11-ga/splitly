@@ -10,6 +10,10 @@ class ConflictError(Exception):
     pass
 
 
+class InputError(Exception):
+    pass
+
+
 def commit(session: Session) -> None:
     try:
         session.commit()

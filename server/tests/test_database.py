@@ -66,11 +66,14 @@ def test_initial_migration_offline_matches_model_ddl():
     normalized_sql = normalize(sql)
     for statement in statements:
         # groups se crea en 0001 y owner_id se agrega mediante ALTER en 0002.
-        if "CREATE TABLE groups" not in statement:
+        if not any(f"CREATE TABLE {table}" in statement for table in ["groups", "members", "expenses", "expense_shares"]):
             assert normalize(statement) in normalized_sql
     assert "ALTER TABLE groups ADD COLUMN owner_id UUID" in sql
     assert "DROP TABLE" not in sql
     assert "private-password" not in sql
-    assert set(SQLModel.metadata.tables) == {"groups", "members", "users", "auth_sessions"}
+    assert "ALTER TABLE members ADD CONSTRAINT uq_members_id_group" in sql
+    assert "CREATE TABLE expenses" in sql and "CREATE TABLE expense_shares" in sql
+    assert "DEFERRABLE INITIALLY DEFERRED" in sql
+    assert set(SQLModel.metadata.tables) == {"groups", "members", "users", "auth_sessions", "expenses", "expense_shares"}
     assert Group(name="Viaje").created_at.tzinfo is not None
     assert Member.__table__.c.group_id.index

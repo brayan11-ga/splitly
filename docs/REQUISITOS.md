@@ -14,7 +14,7 @@
 - Cada gasto tiene un único pagador que pertenece al grupo.
 - El gasto tiene uno o varios participantes beneficiados, todos del grupo.
 - Un gasto se distribuye equitativamente entre beneficiados seleccionados.
-- Se trabaja en centavos enteros; los residuos se asignan de forma determinista según ID ordenado.
+- Se trabaja en pesos colombianos enteros (amount/amount_owed); los residuos se asignan de forma determinista según UUID ascendente. Esta decisión reemplaza la propuesta anterior de centavos.
 - La suma de saldos netos del grupo debe ser cero.
 - No se permiten grupos/participantes inexistentes en un gasto.
 - Confirmar antes de borrar registros con datos relacionados.

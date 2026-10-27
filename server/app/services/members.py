@@ -3,8 +3,9 @@ from uuid import UUID
 from sqlmodel import Session
 
 from app.db import repositories
+from app.db.expense_repository import member_has_expenses
 from app.models import Member
-from app.services.errors import NotFoundError, commit
+from app.services.errors import ConflictError, NotFoundError, commit
 from app.services.groups import get_group
 
 
@@ -41,5 +42,7 @@ def update_member(session: Session, group_id: UUID, member_id: UUID, name: str, 
 
 def delete_member(session: Session, group_id: UUID, member_id: UUID, owner_id: UUID) -> None:
     member = get_member(session, group_id, member_id, owner_id)
+    if member_has_expenses(session, member_id):
+        raise ConflictError("El participante está asociado a gastos. Edita o elimina esos gastos antes de retirarlo.")
     session.delete(member)
     commit(session)
